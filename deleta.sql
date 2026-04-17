@@ -1,0 +1,5 @@
+  DECLARE @sql NVARCHAR(MAX) = '';
+  SELECT @sql += 'DROP TABLE raw.[' + TABLE_NAME + '];' + CHAR(10)
+  FROM INFORMATION_SCHEMA.TABLES
+  WHERE TABLE_SCHEMA = 'raw' AND TABLE_TYPE = 'BASE TABLE';
+  EXEC sp_executesql @sql;

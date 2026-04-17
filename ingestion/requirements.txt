@@ -1,0 +1,5 @@
+hdbcli
+sqlalchemy
+pyodbc
+polars
+python-dotenv

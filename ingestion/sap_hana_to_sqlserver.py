@@ -37,7 +37,7 @@ SQLSERVER_CONN = (
     "&trusted_connection=yes"
 )
 
-TOP_N         = 1000   # none = todas as linhas | int = limita (ex: 500)
+TOP_N         = 10000   # none = todas as linhas | int = limita (ex: 500)
 HANA_TIMEOUT  = 30000  # timeout conexão hana (ms) = 30s
 QUERY_TIMEOUT = 300000 # timeout por query (ms) = 5min
 
@@ -191,8 +191,8 @@ def main():
             n = len(colunas)
             if dados:
                 df = pl.DataFrame(
-                    {colunas[j]: [None if row[j] is None else str(row[j]) for row in dados] for j in range(n)}
-                )
+                    {colunas[j]: [row[j] for row in dados] for j in range(n)}
+                ).cast(pl.String)
             else:
                 df = pl.DataFrame(schema=colunas)
 

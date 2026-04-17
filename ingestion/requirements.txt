@@ -1,5 +1,6 @@
 hdbcli
 sqlalchemy
+sqlalchemy-hana
 pyodbc
 polars
 python-dotenv

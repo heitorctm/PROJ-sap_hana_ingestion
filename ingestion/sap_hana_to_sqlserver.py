@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 import polars as pl
 
 # ──────────────────────────────────────────────
-# CONFIG — lido do .env
+# config: lido do .env
 # ──────────────────────────────────────────────
 
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -37,84 +37,84 @@ SQLSERVER_CONN = (
     "&trusted_connection=yes"
 )
 
-TOP_N         = 100   # None = todas as linhas | int = limita (ex: 500)
-HANA_TIMEOUT  = 30000  # Timeout conexão HANA (ms) = 30s
-QUERY_TIMEOUT = 300000 # Timeout por query (ms) = 5min
+TOP_N         = 1000   # none = todas as linhas | int = limita (ex: 500)
+HANA_TIMEOUT  = 30000  # timeout conexão hana (ms) = 30s
+QUERY_TIMEOUT = 300000 # timeout por query (ms) = 5min
 
 # ──────────────────────────────────────────────
-# TABELAS
+# tabelas
 # ──────────────────────────────────────────────
 
 TABELAS = [
-    # Ciclo de Vendas
-    "OQUT", "QUT1",   # Cotação de vendas + linhas
-    "ORDR", "RDR1",   # Pedido de venda + linhas
-    "ODLN", "DLN1",   # Entrega + linhas
-    "OINV", "INV1",   # Nota Fiscal de Saída + linhas
-    "ORIN", "RIN1",   # Devolução NF Saída + linhas
-    "ODPI", "DPI1",   # Adiantamento de cliente + linhas
+    # ciclo de vendas
+    "OQUT", "QUT1",   # cotação de vendas, linhas
+    "ORDR", "RDR1",   # pedido de venda, linhas
+    "ODLN", "DLN1",   # entrega, linhas
+    "OINV", "INV1",   # nota fiscal de saída, linhas
+    "ORIN", "RIN1",   # devolução nf saída, linhas
+    "ODPI", "DPI1",   # adiantamento de cliente, linhas
 
-    # Ciclo de Compras
-    "OPOR", "POR1",   # Pedido de compra + linhas
-    "OPDN", "PDN1",   # Recebimento de mercadorias + linhas
-    "OPCH", "PCH1",   # Nota Fiscal de Entrada + linhas
-    "ORPC", "RPC1",   # Devolução NF Entrada + linhas
-    "ODPO", "DPO1",   # Adiantamento para fornecedor + linhas
+    # ciclo de compras
+    "OPOR", "POR1",   # pedido de compra, linhas
+    "OPDN", "PDN1",   # recebimento de mercadorias, linhas
+    "OPCH", "PCH1",   # nota fiscal de entrada, linhas
+    "ORPC", "RPC1",   # devolução nf entrada, linhas
+    "ODPO", "DPO1",   # adiantamento para fornecedor, linhas
 
-    # Pagamentos
-    "ORCT",           # Contas a receber (cabeçalho)
-    "RCT1",           # Pagamentos recebidos - cheques
-    "RCT2",           # Pagamentos recebidos - notas fiscais
-    "RCT3",           # Pagamentos recebidos - cartões
-    "OVPM",           # Contas a pagar (cabeçalho)
-    "VPM1",           # Pagamentos emitidos - cheques
-    "VPM2",           # Pagamentos emitidos - notas fiscais
+    # pagamentos
+    "ORCT",           # contas a receber: cabeçalho
+    "RCT1",           # pagamentos recebidos: cheques
+    "RCT2",           # pagamentos recebidos: notas fiscais
+    "RCT3",           # pagamentos recebidos: cartões
+    "OVPM",           # contas a pagar: cabeçalho
+    "VPM1",           # pagamentos emitidos: cheques
+    "VPM2",           # pagamentos emitidos: notas fiscais
 
-    # Parceiros de Negócios
-    "OCRD",           # Business Partners
-    "CRD1",           # Endereços do PN
-    "CRD7",           # IDs fiscais do PN
-    "OCRG",           # Grupos de PNs
-    "OCPR",           # Pessoas de contato
+    # parceiros de negócios
+    "OCRD",           # business partners
+    "CRD1",           # endereços do pn
+    "CRD7",           # ids fiscais do pn
+    "OCRG",           # grupos de pns
+    "OCPR",           # pessoas de contato
 
-    # Itens e Estoque
-    "OITM", "ITM1",   # Itens + preços
-    "OITB",           # Grupos de itens
-    "OITW",           # Itens por depósito
-    "OIVL",           # Diário do depósito (valuation)
-    "OINM",           # Movimentações de estoque
-    "OWHS",           # Depósitos
-    "OIGE", "IGE1",   # Saída de mercadorias + linhas
-    "OIGN", "IGN1",   # Entrada de mercadorias + linhas
-    "OWTR", "WTR1",   # Transferência de estoque + linhas
-    "OWTQ", "WTQ1",   # Pedido de transferência de estoque + linhas
-    "OINC", "INC1",   # Contagem de estoque + linhas
+    # itens e estoque
+    "OITM", "ITM1",   # itens, preços
+    "OITB",           # grupos de itens
+    "OITW",           # itens por depósito
+    "OIVL",           # diário do depósito: valuation
+    "OINM",           # movimentações de estoque
+    "OWHS",           # depósitos
+    "OIGE", "IGE1",   # saída de mercadorias, linhas
+    "OIGN", "IGN1",   # entrada de mercadorias, linhas
+    "OWTR", "WTR1",   # transferência de estoque, linhas
+    "OWTQ", "WTQ1",   # pedido de transferência de estoque, linhas
+    "OINC", "INC1",   # contagem de estoque, linhas
 
-    # Financeiro / Contabilidade
-    "OJDT", "JDT1",   # Lançamento contábil + linhas
-    "OACT",           # Plano de contas
-    "OBGT", "BGT1",   # Orçamento + linhas
-    "OPRC",           # Centro de custos
-    "OFPR",           # Períodos contábeis
+    # financeiro e contabilidade
+    "OJDT", "JDT1",   # lançamento contábil, linhas
+    "OACT",           # plano de contas
+    "OBGT", "BGT1",   # orçamento, linhas
+    "OPRC",           # centro de custos
+    "OFPR",           # períodos contábeis
 
-    # Cadastros de apoio
-    "OSLP",           # Vendedores
-    "OHEM",           # Colaboradores
-    "OBPL",           # Filiais
-    "OMRC",           # Fabricantes
-    "OPLN",           # Listas de preços
-    "OSRI",           # Números de série
-    "OBTN",           # Lotes
-    "OCTG",           # Condições de pagamento
-    "OPYM",           # Métodos de pagamento
-    "OUSR",           # Usuários SAP
-    "OSHP",           # Tipos de envio / transportadoras
-    "OPRJ",           # Códigos de projeto
+    # cadastros de apoio
+    "OSLP",           # vendedores
+    "OHEM",           # colaboradores
+    "OBPL",           # filiais
+    "OMRC",           # fabricantes
+    "OPLN",           # listas de preços
+    "OSRI",           # números de série
+    "OBTN",           # lotes
+    "OCTG",           # condições de pagamento
+    "OPYM",           # métodos de pagamento
+    "OUSR",           # usuários sap
+    "OSHP",           # tipos de envio, transportadoras
+    "OPRJ",           # códigos de projeto
 
-    # Produção
-    "OWOR", "WOR1",   # Ordem de produção + linhas
+    # produção
+    "OWOR", "WOR1",   # ordem de produção, linhas
 
-    # Tabelas customizadas (@)
+    # tabelas customizadas
     "@BDI",
     "@CALC_IMPOSTO_ITEM",
     "@CALENDARIO_SEMANAL",
@@ -141,7 +141,7 @@ TABELAS = [
 ]
 
 # ──────────────────────────────────────────────
-# INGESTÃO
+# ingestão
 # ──────────────────────────────────────────────
 
 def main():
@@ -177,7 +177,7 @@ def main():
                 sql = f'SELECT * FROM "{HANA_SCHEMA}"."{tabela}"'
             cursor.execute(sql)
             colunas_raw = [col[0] for col in cursor.description]
-            # Deduplica nomes de coluna (SAP HANA pode retornar duplicatas em SELECT *)
+            # deduplica nomes de coluna: sap hana pode retornar duplicatas em select *
             seen: dict[str, int] = {}
             colunas = []
             for c in colunas_raw:

@@ -28,8 +28,8 @@ HANA_USER     = os.getenv("HANA_USER")
 HANA_PASSWORD = os.getenv("HANA_PASSWORD")
 HANA_SCHEMA   = os.getenv("HANA_SCHEMA")
 
-SQLSERVER_SERVER   = os.getenv("SQLSERVER_SERVER", "localhost\\SQLEXPRESS")
-SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE", "SAP_MIRROR")
+SQLSERVER_SERVER   = os.getenv("SQLSERVER_SERVER")
+SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE")
 
 SQLSERVER_CONN = (
     f"mssql+pyodbc://{SQLSERVER_SERVER}/{SQLSERVER_DATABASE}"
@@ -37,7 +37,7 @@ SQLSERVER_CONN = (
     "&trusted_connection=yes"
 )
 
-TOP_N         = 5000   # none = todas as linhas | int = limita (ex: 500)
+TOP_N         = 100   # none = todas as linhas | int = limita (ex: 500)
 HANA_TIMEOUT  = 30000  # timeout conexão hana (ms) = 30s
 QUERY_TIMEOUT = 300000 # timeout por query (ms) = 5min
 
@@ -197,8 +197,8 @@ def main():
             n = len(colunas)
             if dados:
                 df = pl.DataFrame(
-                    {colunas[j]: [row[j] for row in dados] for j in range(n)}
-                ).cast(pl.String)
+                    {colunas[j]: [None if row[j] is None else str(row[j]) for row in dados] for j in range(n)}
+                )
             else:
                 df = pl.DataFrame(schema=colunas)
 

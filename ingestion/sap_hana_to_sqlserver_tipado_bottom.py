@@ -1,12 +1,12 @@
 """
 SAP HANA -> SQL Server Local
 Carga raw tipada a partir dos metadados do SAP HANA.
+Variante: sem recriar tabelas, usa LIMIT/OFFSET para buscar slice alternativo dos dados.
 
 Objetivo:
-- criar/recriar tabelas raw no SQL Server com tipos compatíveis
-- extrair dados do SAP HANA sem converter tudo para texto
-- carregar em lotes para reduzir uso de memória
-- manter SELECT * e TOP_N para fase de diagnóstico
+- extrair dados do SAP HANA usando LIMIT e OFFSET (sem TOP)
+- inserir em tabelas raw já existentes no SQL Server
+- manter carregamento em lotes para reduzir uso de memória
 """
 
 import os
@@ -33,7 +33,8 @@ SQLSERVER_SERVER = os.getenv("SQLSERVER_SERVER")
 SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE")
 SQLSERVER_DRIVER = os.getenv("SQLSERVER_DRIVER", "ODBC Driver 17 for SQL Server")
 
-TOP_N = 10000
+TOP_N = 5000
+OFFSET = 20000
 CHUNK_SIZE = 10000
 HANA_TIMEOUT = 30000
 QUERY_TIMEOUT = 300000
@@ -180,115 +181,9 @@ def nome_hana(nome: str) -> str:
     return '"' + nome.replace('"', '""') + '"'
 
 
-def mapear_tipo_hana_para_sqlserver(coluna: dict[str, Any]) -> str:
-    tipo = str(coluna["DATA_TYPE_NAME"]).upper()
-    length = coluna.get("LENGTH")
-    scale = coluna.get("SCALE")
-
-    match tipo:
-        case "NVARCHAR" | "ALPHANUM" | "SHORTTEXT":
-            tamanho = int(length or 255)
-            return "NVARCHAR(MAX)" if tamanho > 4000 else f"NVARCHAR({max(tamanho, 1)})"
-
-        case "VARCHAR":
-            tamanho = int(length or 255)
-            return "VARCHAR(MAX)" if tamanho > 8000 else f"VARCHAR({max(tamanho, 1)})"
-
-        case "NCHAR":
-            tamanho = int(length or 1)
-            return f"NCHAR({min(max(tamanho, 1), 4000)})"
-
-        case "CHAR":
-            tamanho = int(length or 1)
-            return f"CHAR({min(max(tamanho, 1), 8000)})"
-
-        case "TINYINT":
-            return "TINYINT"
-
-        case "SMALLINT":
-            return "SMALLINT"
-
-        case "INTEGER" | "INT":
-            return "INT"
-
-        case "BIGINT":
-            return "BIGINT"
-
-        case "DECIMAL" | "DEC" | "SMALLDECIMAL":
-            precisao = int(length or 38)
-            escala = int(scale or 0)
-            precisao = min(max(precisao, 1), 38)
-            escala = min(max(escala, 0), precisao)
-            return f"DECIMAL({precisao},{escala})"
-
-        case "DOUBLE":
-            return "FLOAT"
-
-        case "REAL":
-            return "REAL"
-
-        case "DATE":
-            return "DATE"
-
-        case "TIME":
-            return "TIME(7)"
-
-        case "TIMESTAMP" | "SECONDDATE":
-            return "DATETIME2(7)"
-
-        case "BOOLEAN":
-            return "BIT"
-
-        case "CLOB" | "NCLOB" | "TEXT" | "BINTEXT":
-            return "NVARCHAR(MAX)"
-
-        case "BLOB" | "VARBINARY" | "BINARY":
-            return "VARBINARY(MAX)"
-
-        case _:
-            return "NVARCHAR(MAX)"
-
-
-def garantir_schema_raw(sql_conn: pyodbc.Connection) -> None:
-    cursor = sql_conn.cursor()
-    cursor.execute(
-        f"""
-        IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = '{RAW_SCHEMA}')
-        BEGIN
-            EXEC('CREATE SCHEMA {RAW_SCHEMA}')
-        END
-        """
-    )
-    sql_conn.commit()
-
-
-def recriar_tabela_raw(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
-    colunas_sql = []
-    for coluna in metadados:
-        nome_coluna = nome_sqlserver(coluna["COLUMN_NAME"])
-        tipo_coluna = mapear_tipo_hana_para_sqlserver(coluna)
-        colunas_sql.append(f"    {nome_coluna} {tipo_coluna} NULL")
-
-    definicao_colunas = ",\n".join(colunas_sql)
-
-    ddl = f"""
-    IF OBJECT_ID('{RAW_SCHEMA}.{tabela}', 'U') IS NOT NULL
-        DROP TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)};
-
-    CREATE TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} (
-{definicao_colunas}
-    );
-    """
-
-    cursor = sql_conn.cursor()
-    cursor.execute(ddl)
-    sql_conn.commit()
-
-
 def montar_select_hana(tabela: str, metadados: list[dict[str, Any]]) -> str:
     colunas = ", ".join(nome_hana(coluna["COLUMN_NAME"]) for coluna in metadados)
-    top = f"TOP {TOP_N} " if TOP_N else ""
-    return f"SELECT {top}{colunas} FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela)}"
+    return f"SELECT {colunas} FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela)} LIMIT {TOP_N} OFFSET {OFFSET}"
 
 
 def montar_insert_sqlserver(tabela: str, metadados: list[dict[str, Any]]) -> str:
@@ -309,8 +204,6 @@ def carregar_tabela(hana_engine, sql_conn: pyodbc.Connection, tabela: str) -> tu
 
     if not metadados:
         raise ValueError(f"Tabela sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
-
-    recriar_tabela_raw(sql_conn, tabela, metadados)
 
     sql_select = montar_select_hana(tabela, metadados)
     sql_insert = montar_insert_sqlserver(tabela, metadados)
@@ -355,12 +248,10 @@ def main() -> None:
         testar_conexao_sqlserver(sql_conn)
         print("SQL Server conectado com sucesso.")
 
-        garantir_schema_raw(sql_conn)
-
     except Exception as e:
-        print("\\nERRO DE CONEXÃO/AMBIENTE")
+        print("\nERRO DE CONEXÃO/AMBIENTE")
         print(str(e))
-        print("\\nDetalhes técnicos:")
+        print("\nDetalhes técnicos:")
         print(traceback.format_exc())
 
         if sql_conn is not None:
@@ -374,8 +265,7 @@ def main() -> None:
     sucesso = 0
     erros: list[tuple[str, str, str]] = []
 
-    modo = f"TOP {TOP_N}" if TOP_N else "COMPLETO"
-    print(f"\\nIniciando carga raw tipada de {total} tabelas ({modo})...\\n")
+    print(f"\nIniciando carga raw tipada de {total} tabelas (LIMIT {TOP_N} OFFSET {OFFSET})...\n")
 
     try:
         for i, tabela in enumerate(TABELAS, 1):
@@ -383,11 +273,11 @@ def main() -> None:
             try:
                 print(f"{prefixo} carregando...", end="", flush=True)
                 linhas, segundos = carregar_tabela(hana_engine, sql_conn, tabela)
-                print(f"\\r{prefixo} OK — {linhas:>8} linhas em {segundos:>8.2f}s")
+                print(f"\r{prefixo} OK — {linhas:>8} linhas em {segundos:>8.2f}s")
                 sucesso += 1
             except Exception as e:
                 erro_completo = traceback.format_exc()
-                print(f"\\r{prefixo} ERRO: {e}")
+                print(f"\r{prefixo} ERRO: {e}")
                 erros.append((tabela, str(e), erro_completo))
     finally:
         if sql_conn is not None:
@@ -395,15 +285,15 @@ def main() -> None:
         if hana_engine is not None:
             hana_engine.dispose()
 
-    print(f"\\n{'─' * 70}")
+    print(f"\n{'─' * 70}")
     print(f"Concluído: {sucesso}/{total} tabelas carregadas")
 
     if erros:
-        print(f"\\nTabelas com erro ({len(erros)}):")
+        print(f"\nTabelas com erro ({len(erros)}):")
         for tabela, msg, detalhe in erros:
-            print(f"\\n  {tabela}: {msg}")
+            print(f"\n  {tabela}: {msg}")
             print("  Detalhes técnicos:")
-            print("  " + detalhe.replace("\\n", "\\n  ").rstrip())
+            print("  " + detalhe.replace("\n", "\n  ").rstrip())
 
 
 if __name__ == "__main__":

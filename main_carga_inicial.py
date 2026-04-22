@@ -1,20 +1,12 @@
 import sys
+import time
 import traceback
+from uuid import uuid4
 
+from ingestion.audit import registrar_erro, registrar_inicio, registrar_sucesso
 from ingestion.config import carregar_tabelas
-from ingestion.connections import (
-    criar_conexao_sqlserver,
-    criar_engine_hana,
-    testar_conexao_hana,
-    testar_conexao_sqlserver,
-)
-from ingestion.loader import (
-    criar_tabela_se_nao_existir,
-    executar_carga,
-    garantir_schema_raw,
-    montar_insert_sqlserver,
-    montar_select_hana,
-)
+from ingestion.connections import criar_conexao_sqlserver, criar_engine_hana, testar_conexao_hana, testar_conexao_sqlserver
+from ingestion.loader import criar_tabela_se_nao_existir, executar_carga, garantir_schema_raw, montar_insert_sqlserver, montar_select_hana
 from ingestion.metadata import buscar_metadados_tabela
 from ingestion.strategies import executar_janela, gerar_janelas
 
@@ -53,12 +45,15 @@ def main() -> None:
 
     garantir_schema_raw(sql_conn)
 
+    execucao_id = uuid4()
     tabelas = carregar_tabelas()
     total = len(tabelas)
     sucesso = 0
     erros: list[tuple[str, str, str]] = []
 
     print(f"\nIniciando carga inicial de {total} tabelas...\n")
+
+    inicio_total = time.perf_counter()
 
     try:
         for i, (tabela, cfg) in enumerate(tabelas.items(), 1):
@@ -68,6 +63,8 @@ def main() -> None:
             fim = ci.get("fim")
             janela_meses = ci.get("janela_meses")
             coluna_watermark = cfg["coluna_watermark"]
+            estrategia = cfg["estrategia"]
+            frequencia = cfg["frequencia"]
 
             try:
                 metadados = buscar_metadados_tabela(
@@ -77,6 +74,8 @@ def main() -> None:
                     raise ValueError(f"Sem metadados no HANA para {tabela}")
 
                 criar_tabela_se_nao_existir(sql_conn, tabela, metadados)
+                registrar_inicio(sql_conn, execucao_id, tabela, estrategia, frequencia)
+                inicio_tabela = time.perf_counter()
 
                 if inicio and fim and janela_meses and coluna_watermark:
                     janelas = gerar_janelas(inicio, fim, janela_meses)
@@ -93,19 +92,23 @@ def main() -> None:
                         total_linhas += linhas
                         print(f"\r{prefixo} janela {j:>2}/{len(janelas)} [{j_inicio} → {j_fim}] OK — {linhas:>8} linhas")
 
-                    print(f"{prefixo} TOTAL: {total_linhas} linhas em {len(janelas)} janelas")
+                    segundos = time.perf_counter() - inicio_tabela
+                    print(f"{prefixo} TOTAL: {total_linhas:>8} linhas em {len(janelas)} janelas — {segundos:.2f}s")
 
                 else:
                     print(f"{prefixo} [full] carregando...", end="", flush=True)
                     sql_select = montar_select_hana(tabela, metadados)
                     sql_insert = montar_insert_sqlserver(tabela, metadados)
                     total_linhas = executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
-                    print(f"\r{prefixo} [full] OK — {total_linhas:>8} linhas")
+                    segundos = time.perf_counter() - inicio_tabela
+                    print(f"\r{prefixo} [full] OK — {total_linhas:>8} linhas — {segundos:.2f}s")
 
+                registrar_sucesso(sql_conn, execucao_id, tabela, total_linhas)
                 sucesso += 1
 
             except Exception as e:
                 erro_completo = traceback.format_exc()
+                registrar_erro(sql_conn, execucao_id, tabela, erro_completo)
                 print(f"\r{prefixo} ERRO: {e}")
                 erros.append((tabela, str(e), erro_completo))
 
@@ -115,8 +118,11 @@ def main() -> None:
         if hana_engine is not None:
             hana_engine.dispose()
 
+    total_segundos = time.perf_counter() - inicio_total
+    total_minutos = total_segundos / 60
+
     print(f"\n{'─' * 70}")
-    print(f"Concluído: {sucesso}/{total} tabelas carregadas")
+    print(f"Concluído: {sucesso}/{total} tabelas carregadas — {total_minutos:.1f} min ({total_segundos:.0f}s)")
 
     if erros:
         print(f"\nTabelas com erro ({len(erros)}):")

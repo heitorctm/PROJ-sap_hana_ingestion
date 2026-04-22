@@ -53,11 +53,11 @@ def main() -> None:
     print(f"\nIniciando carga raw de {total} tabelas...\n")
 
     try:
-        for i, (tabela, colunas) in enumerate(tabelas.items(), 1):
+        for i, (tabela, cfg) in enumerate(tabelas.items(), 1):
             prefixo = f"[{i:>3}/{total}] {tabela:<30}"
             try:
                 print(f"{prefixo} carregando...", end="", flush=True)
-                linhas, segundos = carregar_tabela(hana_engine, sql_conn, tabela, colunas)
+                linhas, segundos = carregar_tabela(hana_engine, sql_conn, tabela, cfg["colunas"], cfg["tipo"])
                 print(f"\r{prefixo} OK — {linhas:>8} linhas em {segundos:>8.2f}s")
                 sucesso += 1
             except Exception as e:

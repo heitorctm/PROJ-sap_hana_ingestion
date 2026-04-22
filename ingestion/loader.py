@@ -73,9 +73,10 @@ def carregar_tabela(
     sql_conn: pyodbc.Connection,
     tabela: str,
     colunas: list[str],
+    tipo: str = "tabela",
 ) -> tuple[int, float]:
     inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas)
+    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
 
     if not metadados:
         raise ValueError(f"Tabela sem metadados no HANA: {HANA_SCHEMA}.{tabela}")

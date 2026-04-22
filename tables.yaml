@@ -2,11 +2,21 @@
 # formato:
 #
 # NOME_TABELA:
+#   tipo: tabela
 #   colunas:
 #     - COLUNA1
 #     - COLUNA2
 #
+# para views usar tipo: view
+# tabelas com @ no nome precisam de aspas:
+#
+# "@NOME_TABELA":
+#   tipo: tabela
+#   colunas:
+#     - COLUNA1
+#
 OINV:
+  tipo: tabela
   colunas:
     - BPLName
     - CANCELED
@@ -22,7 +32,9 @@ OINV:
     - U_KITCARGA
     - U_Loja
     - U_PROTESTO
+
 VW_FAROL_MAPA_RELACAO:
+  tipo: view
   colunas:
     - Orçamento
     - Orc_Cancelado
@@ -33,7 +45,9 @@ VW_FAROL_MAPA_RELACAO:
     - Nota
     - Nota_Cancelada
     - Status_Nota
+
 VW_PBI_RANKING_VENDAS_V3:
+  tipo: view
   colunas:
     - NF/OP
     - DATA
@@ -53,24 +67,34 @@ VW_PBI_RANKING_VENDAS_V3:
     - ORIGEM
     - Nome_Loja
     - TotalComDesc_Margem
-@ITEM_FAMILIA:
+
+"@ITEM_FAMILIA":
+  tipo: tabela
   colunas:
     - Code
     - Name
-@ITEM_SUB_CLASSE:
+
+"@ITEM_SUB_CLASSE":
+  tipo: tabela
   colunas:
     - Code
     - Name
-@ITEM_CLASSE:
+
+"@ITEM_CLASSE":
+  tipo: tabela
   colunas:
     - Code
     - Name
+
 ITM1:
+  tipo: tabela
   colunas:
     - ItemCode
     - Price
     - PriceList
+
 OITM:
+  tipo: tabela
   colunas:
     - FirmCode
     - InvntryUom
@@ -81,54 +105,76 @@ OITM:
     - U_FAMILIA
     - U_SUB_CLASSE
     - U_CURVA
+
 OITW:
+  tipo: tabela
   colunas:
     - ItemCode
     - WhsCode
     - OnHand
+
 OACT:
+  tipo: tabela
   colunas:
     - AcctCode
     - AcctName
+
 JDT1:
+  tipo: tabela
   colunas:
     - Account
     - Credit
     - Debit
     - RefDate
+
 OCRD:
+  tipo: tabela
   colunas:
     - CardCode
     - CardFName
     - GroupCode
     - Password
     - CardType
+
 OCRG:
+  tipo: tabela
   colunas:
     - GroupCode
     - GroupName
+
 OBPL:
+  tipo: tabela
   colunas:
     - BPLId
     - BPLName
+
 OWHS:
+  tipo: tabela
   colunas:
     - WhsCode
     - WhsName
     - BPLId
+
 NFN1:
+  tipo: tabela
   colunas:
     - SeqCode
     - SeqName
+
 OSLP:
+  tipo: tabela
   colunas:
     - SlpCode
     - SlpName
-@LOJAS:
+
+"@LOJAS":
+  tipo: tabela
   colunas:
     - Code
     - Name
+
 BTF1:
+  tipo: tabela
   colunas:
     - BTLName
     - Credit
@@ -137,12 +183,16 @@ BTF1:
     - RefDate
     - ShortName
     - TransID
+
 OBTF:
+  tipo: tabela
   colunas:
     - BTFStatus
     - Memo
     - TransId
+
 PCH6:
+  tipo: tabela
   colunas:
     - DocEntry
     - DueDate
@@ -150,7 +200,9 @@ PCH6:
     - InstlmntID
     - Paid
     - Status
+
 OPCH:
+  tipo: tabela
   colunas:
     - BPLName
     - CANCELED
@@ -163,7 +215,9 @@ OPCH:
     - SeqCode
     - Serial
     - U_Loja
+
 INV6:
+  tipo: tabela
   colunas:
     - DocEntry
     - DueDate

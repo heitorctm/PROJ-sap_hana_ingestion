@@ -23,8 +23,14 @@ QUERY_TIMEOUT = 300000
 RAW_SCHEMA = "raw"
 
 
-def carregar_tabelas() -> dict[str, list[str]]:
+def carregar_tabelas() -> dict[str, dict]:
     caminho = Path(__file__).parent.parent / "tables.yaml"
     with caminho.open(encoding="utf-8") as f:
         dados = yaml.safe_load(f)
-    return {tabela: cfg.get("colunas") or [] for tabela, cfg in (dados or {}).items()}
+    return {
+        tabela: {
+            "tipo": cfg.get("tipo", "tabela"),
+            "colunas": cfg.get("colunas") or [],
+        }
+        for tabela, cfg in (dados or {}).items()
+    }

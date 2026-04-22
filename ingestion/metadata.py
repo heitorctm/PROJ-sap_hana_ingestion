@@ -5,18 +5,26 @@ from sqlalchemy import text
 from ingestion.config import HANA_SCHEMA
 
 
-def buscar_metadados_tabela(hana_engine, tabela: str, colunas: list[str]) -> list[dict[str, Any]]:
+def buscar_metadados_tabela(hana_engine, tabela: str, colunas: list[str], tipo: str = "tabela") -> list[dict[str, Any]]:
+    match tipo:
+        case "view":
+            sys_view = "SYS.VIEW_COLUMNS"
+            nome_col = "VIEW_NAME"
+        case _:
+            sys_view = "SYS.TABLE_COLUMNS"
+            nome_col = "TABLE_NAME"
+
     sql = text(
-        """
+        f"""
         SELECT
             COLUMN_NAME AS "COLUMN_NAME",
             DATA_TYPE_NAME AS "DATA_TYPE_NAME",
             LENGTH AS "LENGTH",
             SCALE AS "SCALE",
             POSITION AS "POSITION"
-        FROM SYS.TABLE_COLUMNS
+        FROM {sys_view}
         WHERE SCHEMA_NAME = :schema
-          AND TABLE_NAME = :tabela
+          AND {nome_col} = :tabela
         ORDER BY POSITION
         """
     )
@@ -81,10 +89,10 @@ def mapear_tipo_hana_para_sqlserver(coluna: dict[str, Any]) -> str:
             return "BIGINT"
 
         case "DECIMAL" | "DEC" | "SMALLDECIMAL":
-            precisao = int(length or 38)
-            escala = int(scale or 0)
-            precisao = min(max(precisao, 1), 38)
-            escala = min(max(escala, 0), precisao)
+            if scale is None:
+                return "DECIMAL(38,10)"
+            precisao = min(max(int(length or 38), 1), 38)
+            escala = min(max(int(scale), 0), precisao)
             return f"DECIMAL({precisao},{escala})"
 
         case "DOUBLE":

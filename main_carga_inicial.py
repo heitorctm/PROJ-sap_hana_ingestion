@@ -97,7 +97,7 @@ def main() -> None:
 
                 else:
                     print(f"{prefixo} [full] carregando...", end="", flush=True)
-                    sql_select = montar_select_hana(tabela, metadados, com_top=False)
+                    sql_select = montar_select_hana(tabela, metadados)
                     sql_insert = montar_insert_sqlserver(tabela, metadados)
                     total_linhas = executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
                     print(f"\r{prefixo} [full] OK — {total_linhas:>8} linhas")

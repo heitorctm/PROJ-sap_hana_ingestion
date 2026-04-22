@@ -29,7 +29,7 @@ OINV:
   coluna_watermark: UpdateDate
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2023-12-31"
+    fim: "2026-04-22"
     janela_meses: 3
   colunas:
     - DocEntry
@@ -346,6 +346,7 @@ BTF1:
   estrategia: incremental_append
   chave_primaria:
     - Line_ID
+    - ShortName
   coluna_watermark: RefDate
   carga_inicial:
     inicio: null

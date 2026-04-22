@@ -3,7 +3,7 @@ from typing import Any
 import pyodbc
 from sqlalchemy import text
 
-from ingestion.config import CHUNK_SIZE, HANA_SCHEMA, RAW_SCHEMA, TOP_N
+from ingestion.config import CHUNK_SIZE, HANA_SCHEMA, RAW_SCHEMA
 from ingestion.metadata import mapear_tipo_hana_para_sqlserver
 
 
@@ -101,10 +101,9 @@ def deletar_por_chave(
     sql_conn.commit()
 
 
-def montar_select_hana(tabela: str, metadados: list[dict[str, Any]], filtro: str | None = None, com_top: bool = True) -> str:
+def montar_select_hana(tabela: str, metadados: list[dict[str, Any]], filtro: str | None = None) -> str:
     colunas = ", ".join(nome_hana(col["COLUMN_NAME"]) for col in metadados)
-    top = f"TOP {TOP_N} " if (com_top and TOP_N) else ""
-    sql = f"SELECT {top}{colunas} FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela)}"
+    sql = f"SELECT {colunas} FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela)}"
     if filtro:
         sql += f" WHERE {filtro}"
     return sql

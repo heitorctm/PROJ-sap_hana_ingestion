@@ -132,6 +132,6 @@ def executar_janela(
         f"{nome_hana(coluna_watermark)} >= '{janela_inicio}' "
         f"AND {nome_hana(coluna_watermark)} <= '{janela_fim}'"
     )
-    sql_select = montar_select_hana(tabela, metadados, filtro, com_top=False)
+    sql_select = montar_select_hana(tabela, metadados, filtro)
     sql_insert = montar_insert_sqlserver(tabela, metadados)
     return executar_carga(hana_engine, sql_conn, sql_select, sql_insert)

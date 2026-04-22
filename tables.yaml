@@ -1,0 +1,24 @@
+# tabelas e colunas a extrair do SAP HANA
+# formato:
+#
+# NOME_TABELA:
+#   colunas:
+#     - COLUNA1
+#     - COLUNA2
+#
+OINV:
+  colunas:
+    - BPLName
+    - CANCELED
+    - CardCode
+    - CardName
+    - Comments
+    - DocDate
+    - DocEntry
+    - DocNum
+    - Serial
+    - SlpCode
+    - U_chamadoSults
+    - U_KITCARGA
+    - U_Loja
+    - U_PROTESTO

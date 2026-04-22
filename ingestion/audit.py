@@ -10,18 +10,19 @@ def registrar_inicio(
     tabela: str,
     estrategia: str,
     frequencia: str,
-) -> datetime:
-    inicio = datetime.now()
-    cursor = sql_conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO audit.log_ingestao (execucao_id, tabela, estrategia, frequencia, inicio_em, status)
-        VALUES (?, ?, ?, ?, ?, 'em_andamento')
-        """,
-        str(execucao_id), tabela, estrategia, frequencia, inicio,
-    )
-    sql_conn.commit()
-    return inicio
+) -> None:
+    try:
+        cursor = sql_conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO audit.log_ingestao (execucao_id, tabela, estrategia, frequencia, inicio_em, status)
+            VALUES (?, ?, ?, ?, ?, 'em_andamento')
+            """,
+            str(execucao_id), tabela, estrategia, frequencia, datetime.now(),
+        )
+        sql_conn.commit()
+    except Exception as e:
+        print(f"[audit] falha ao registrar início de {tabela}: {e}")
 
 
 def registrar_sucesso(
@@ -30,16 +31,19 @@ def registrar_sucesso(
     tabela: str,
     linhas: int,
 ) -> None:
-    cursor = sql_conn.cursor()
-    cursor.execute(
-        """
-        UPDATE audit.log_ingestao
-        SET fim_em = ?, linhas = ?, status = 'sucesso'
-        WHERE execucao_id = ? AND tabela = ?
-        """,
-        datetime.now(), linhas, str(execucao_id), tabela,
-    )
-    sql_conn.commit()
+    try:
+        cursor = sql_conn.cursor()
+        cursor.execute(
+            """
+            UPDATE audit.log_ingestao
+            SET fim_em = ?, linhas = ?, status = 'sucesso'
+            WHERE execucao_id = ? AND tabela = ?
+            """,
+            datetime.now(), linhas, str(execucao_id), tabela,
+        )
+        sql_conn.commit()
+    except Exception as e:
+        print(f"[audit] falha ao registrar sucesso de {tabela}: {e}")
 
 
 def registrar_erro(
@@ -48,13 +52,16 @@ def registrar_erro(
     tabela: str,
     mensagem: str,
 ) -> None:
-    cursor = sql_conn.cursor()
-    cursor.execute(
-        """
-        UPDATE audit.log_ingestao
-        SET fim_em = ?, status = 'erro', mensagem_erro = ?
-        WHERE execucao_id = ? AND tabela = ?
-        """,
-        datetime.now(), mensagem[:4000], str(execucao_id), tabela,
-    )
-    sql_conn.commit()
+    try:
+        cursor = sql_conn.cursor()
+        cursor.execute(
+            """
+            UPDATE audit.log_ingestao
+            SET fim_em = ?, status = 'erro', mensagem_erro = ?
+            WHERE execucao_id = ? AND tabela = ?
+            """,
+            datetime.now(), mensagem[:4000], str(execucao_id), tabela,
+        )
+        sql_conn.commit()
+    except Exception as e:
+        print(f"[audit] falha ao registrar erro de {tabela}: {e}")

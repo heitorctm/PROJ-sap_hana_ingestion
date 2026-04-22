@@ -3,7 +3,7 @@
 #
 # NOME_TABELA:
 #   tipo: tabela | view
-#   estrategia: incremental_upsert | incremental_append | full_reload
+#   estrategia: incremental_append | incremental_append | full_reload
 #   chave_primaria:
 #     - COLUNA_PK
 #   coluna_watermark: COLUNA_DATA
@@ -23,7 +23,7 @@
 
 OINV:
   tipo: tabela
-  estrategia: incremental_upsert
+  estrategia: incremental_append
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
@@ -79,7 +79,7 @@ VW_PBI_RANKING_VENDAS_V3:
   chave_primaria: []
   coluna_watermark: DATA
   carga_inicial:
-    inicio: "2023-10-01"
+    inicio: "2023-01-01"
     fim: "2026-04-22"
     janela_meses: 3
   colunas:
@@ -163,7 +163,7 @@ ITM1:
 
 OITM:
   tipo: tabela
-  estrategia: incremental_upsert
+  estrategia: incremental_append
   chave_primaria:
     - ItemCode
   coluna_watermark: UpdateDate
@@ -238,12 +238,12 @@ JDT1:
 
 OCRD:
   tipo: tabela
-  estrategia: incremental_upsert
+  estrategia: incremental_append
   chave_primaria:
     - CardCode
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2023-06-01"
+    inicio: "2023-01-01"
     fim: "2026-04-22"
     janela_meses: 6
   colunas:
@@ -359,7 +359,7 @@ BTF1:
     - Line_ID
     - RefDate
     - ShortName
-    - TransID
+    - TransId
 
 OBTF:
   tipo: tabela
@@ -384,7 +384,7 @@ PCH6:
     - InstlmntID
   coluna_watermark: DueDate
   carga_inicial:
-    inicio: "2023-07-01"
+    inicio: "2023-01-01"
     fim: "2026-04-22"
     janela_meses: 3
   colunas:
@@ -397,7 +397,7 @@ PCH6:
 
 OPCH:
   tipo: tabela
-  estrategia: incremental_upsert
+  estrategia: incremental_append
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
@@ -432,7 +432,7 @@ INV6:
     - InstlmntID
   coluna_watermark: DueDate
   carga_inicial:
-    inicio: "2023-07-01"
+    inicio: "2023-01-01"
     fim: "2026-04-22"
     janela_meses: 3
   colunas:

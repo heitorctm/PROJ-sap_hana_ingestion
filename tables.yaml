@@ -22,3 +22,152 @@ OINV:
     - U_KITCARGA
     - U_Loja
     - U_PROTESTO
+VW_FAROL_MAPA_RELACAO:
+  colunas:
+    - Orçamento
+    - Orc_Cancelado
+    - Status_Orçamento
+    - Pedido
+    - Ped_Cancelado
+    - Status_Pedido
+    - Nota
+    - Nota_Cancelada
+    - Status_Nota
+VW_PBI_RANKING_VENDAS_V3:
+  colunas:
+    - NF/OP
+    - DATA
+    - Loja
+    - Vendedor
+    - ItemCode
+    - Dscription
+    - Familia
+    - Classe
+    - Sub Classe
+    - TotalComDesc
+    - TotalCusto
+    - Desconto
+    - cliente
+    - Documento
+    - KitCarga
+    - ORIGEM
+    - Nome_Loja
+    - TotalComDesc_Margem
+@ITEM_FAMILIA:
+  colunas:
+    - Code
+    - Name
+@ITEM_SUB_CLASSE:
+  colunas:
+    - Code
+    - Name
+@ITEM_CLASSE:
+  colunas:
+    - Code
+    - Name
+ITM1:
+  colunas:
+    - ItemCode
+    - Price
+    - PriceList
+OITM:
+  colunas:
+    - FirmCode
+    - InvntryUom
+    - InvntItem
+    - ItemCode
+    - ItemName
+    - U_CLASSE
+    - U_FAMILIA
+    - U_SUB_CLASSE
+    - U_CURVA
+OITW:
+  colunas:
+    - ItemCode
+    - WhsCode
+    - OnHand
+OACT:
+  colunas:
+    - AcctCode
+    - AcctName
+JDT1:
+  colunas:
+    - Account
+    - Credit
+    - Debit
+    - RefDate
+OCRD:
+  colunas:
+    - CardCode
+    - CardFName
+    - GroupCode
+    - Password
+    - CardType
+OCRG:
+  colunas:
+    - GroupCode
+    - GroupName
+OBPL:
+  colunas:
+    - BPLId
+    - BPLName
+OWHS:
+  colunas:
+    - WhsCode
+    - WhsName
+    - BPLId
+NFN1:
+  colunas:
+    - SeqCode
+    - SeqName
+OSLP:
+  colunas:
+    - SlpCode
+    - SlpName
+@LOJAS:
+  colunas:
+    - Code
+    - Name
+BTF1:
+  colunas:
+    - BTLName
+    - Credit
+    - DueDate
+    - Line_ID
+    - RefDate
+    - ShortName
+    - TransID
+OBTF:
+  colunas:
+    - BTFStatus
+    - Memo
+    - TransId
+PCH6:
+  colunas:
+    - DocEntry
+    - DueDate
+    - InsTotal
+    - InstlmntID
+    - Paid
+    - Status
+OPCH:
+  colunas:
+    - BPLName
+    - CANCELED
+    - CardCode
+    - CardName
+    - Comments
+    - DocDate
+    - DocEntry
+    - PeyMethod
+    - SeqCode
+    - Serial
+    - U_Loja
+INV6:
+  colunas:
+    - DocEntry
+    - DueDate
+    - InsTotal
+    - InstlmntID
+    - Paid
+    - Status

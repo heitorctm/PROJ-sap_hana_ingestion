@@ -2,29 +2,36 @@
 # formato:
 #
 # NOME_TABELA:
-#   tipo: tabela
+#   tipo: tabela | view
+#   estrategia: incremental_upsert | incremental_append | full_reload
+#   chave_primaria:
+#     - COLUNA_PK          # pode ser composta (lista de colunas)
+#   coluna_watermark: COLUNA_DATA   # coluna usada para detectar registros novos/alterados
 #   colunas:
 #     - COLUNA1
 #     - COLUNA2
 #
-# para views usar tipo: view
 # tabelas com @ no nome precisam de aspas:
 #
 # "@NOME_TABELA":
 #   tipo: tabela
-#   colunas:
-#     - COLUNA1
-#
+#   ...
+
 OINV:
   tipo: tabela
+  estrategia: incremental_upsert
+  chave_primaria:
+    - DocEntry
+  coluna_watermark: UpdateDate
   colunas:
+    - DocEntry
+    - UpdateDate
     - BPLName
     - CANCELED
     - CardCode
     - CardName
     - Comments
     - DocDate
-    - DocEntry
     - DocNum
     - Serial
     - SlpCode
@@ -35,6 +42,9 @@ OINV:
 
 VW_FAROL_MAPA_RELACAO:
   tipo: view
+  estrategia: full_reload
+  chave_primaria: []
+  coluna_watermark: null
   colunas:
     - Orçamento
     - Orc_Cancelado
@@ -48,6 +58,9 @@ VW_FAROL_MAPA_RELACAO:
 
 VW_PBI_RANKING_VENDAS_V3:
   tipo: view
+  estrategia: incremental_append
+  chave_primaria: []
+  coluna_watermark: DATA
   colunas:
     - NF/OP
     - DATA
@@ -70,24 +83,41 @@ VW_PBI_RANKING_VENDAS_V3:
 
 "@ITEM_FAMILIA":
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - Code
+  coluna_watermark: null
   colunas:
     - Code
     - Name
 
 "@ITEM_SUB_CLASSE":
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - Code
+  coluna_watermark: null
   colunas:
     - Code
     - Name
 
 "@ITEM_CLASSE":
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - Code
+  coluna_watermark: null
   colunas:
     - Code
     - Name
 
 ITM1:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - ItemCode
+    - PriceList
+  coluna_watermark: null
   colunas:
     - ItemCode
     - Price
@@ -95,11 +125,16 @@ ITM1:
 
 OITM:
   tipo: tabela
+  estrategia: incremental_upsert
+  chave_primaria:
+    - ItemCode
+  coluna_watermark: UpdateDate
   colunas:
+    - ItemCode
+    - UpdateDate
     - FirmCode
     - InvntryUom
     - InvntItem
-    - ItemCode
     - ItemName
     - U_CLASSE
     - U_FAMILIA
@@ -108,6 +143,11 @@ OITM:
 
 OITW:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - ItemCode
+    - WhsCode
+  coluna_watermark: null
   colunas:
     - ItemCode
     - WhsCode
@@ -115,12 +155,21 @@ OITW:
 
 OACT:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - AcctCode
+  coluna_watermark: null
   colunas:
     - AcctCode
     - AcctName
 
 JDT1:
   tipo: tabela
+  estrategia: incremental_append
+  chave_primaria:
+    - Account
+    - RefDate
+  coluna_watermark: RefDate
   colunas:
     - Account
     - Credit
@@ -129,8 +178,13 @@ JDT1:
 
 OCRD:
   tipo: tabela
+  estrategia: incremental_upsert
+  chave_primaria:
+    - CardCode
+  coluna_watermark: UpdateDate
   colunas:
     - CardCode
+    - UpdateDate
     - CardFName
     - GroupCode
     - Password
@@ -138,18 +192,30 @@ OCRD:
 
 OCRG:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - GroupCode
+  coluna_watermark: null
   colunas:
     - GroupCode
     - GroupName
 
 OBPL:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - BPLId
+  coluna_watermark: null
   colunas:
     - BPLId
     - BPLName
 
 OWHS:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - WhsCode
+  coluna_watermark: null
   colunas:
     - WhsCode
     - WhsName
@@ -157,24 +223,40 @@ OWHS:
 
 NFN1:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - SeqCode
+  coluna_watermark: null
   colunas:
     - SeqCode
     - SeqName
 
 OSLP:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - SlpCode
+  coluna_watermark: null
   colunas:
     - SlpCode
     - SlpName
 
 "@LOJAS":
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - Code
+  coluna_watermark: null
   colunas:
     - Code
     - Name
 
 BTF1:
   tipo: tabela
+  estrategia: incremental_append
+  chave_primaria:
+    - Line_ID
+  coluna_watermark: RefDate
   colunas:
     - BTLName
     - Credit
@@ -186,6 +268,10 @@ BTF1:
 
 OBTF:
   tipo: tabela
+  estrategia: full_reload
+  chave_primaria:
+    - TransId
+  coluna_watermark: null
   colunas:
     - BTFStatus
     - Memo
@@ -193,6 +279,11 @@ OBTF:
 
 PCH6:
   tipo: tabela
+  estrategia: incremental_append
+  chave_primaria:
+    - DocEntry
+    - InstlmntID
+  coluna_watermark: DueDate
   colunas:
     - DocEntry
     - DueDate
@@ -203,14 +294,19 @@ PCH6:
 
 OPCH:
   tipo: tabela
+  estrategia: incremental_upsert
+  chave_primaria:
+    - DocEntry
+  coluna_watermark: UpdateDate
   colunas:
+    - DocEntry
+    - UpdateDate
     - BPLName
     - CANCELED
     - CardCode
     - CardName
     - Comments
     - DocDate
-    - DocEntry
     - PeyMethod
     - SeqCode
     - Serial
@@ -218,6 +314,11 @@ OPCH:
 
 INV6:
   tipo: tabela
+  estrategia: incremental_append
+  chave_primaria:
+    - DocEntry
+    - InstlmntID
+  coluna_watermark: DueDate
   colunas:
     - DocEntry
     - DueDate

@@ -30,6 +30,9 @@ def carregar_tabelas() -> dict[str, dict]:
     return {
         tabela: {
             "tipo": cfg.get("tipo", "tabela"),
+            "estrategia": cfg.get("estrategia", "full_reload"),
+            "chave_primaria": cfg.get("chave_primaria") or [],
+            "coluna_watermark": cfg.get("coluna_watermark"),
             "colunas": cfg.get("colunas") or [],
         }
         for tabela, cfg in (dados or {}).items()

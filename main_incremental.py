@@ -1,3 +1,4 @@
+import argparse
 import sys
 import traceback
 
@@ -12,6 +13,15 @@ from ingestion.strategies import executar_append, executar_full_reload, executar
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--frequencia",
+        choices=["diaria", "semanal"],
+        default=None,
+        help="Filtrar tabelas por frequência. Sem argumento roda todas.",
+    )
+    args = parser.parse_args()
+
     hana_engine = None
     sql_conn = None
 
@@ -44,14 +54,20 @@ def main() -> None:
         sys.exit(1)
 
     tabelas = carregar_tabelas()
-    total = len(tabelas)
+    tabelas_filtradas = {
+        t: cfg for t, cfg in tabelas.items()
+        if args.frequencia is None or cfg["frequencia"] == args.frequencia
+    }
+
+    total = len(tabelas_filtradas)
     sucesso = 0
     erros: list[tuple[str, str, str]] = []
 
-    print(f"\nIniciando carga incremental de {total} tabelas...\n")
+    filtro_label = args.frequencia or "todas"
+    print(f"\nIniciando carga incremental [{filtro_label}] — {total} tabelas...\n")
 
     try:
-        for i, (tabela, cfg) in enumerate(tabelas.items(), 1):
+        for i, (tabela, cfg) in enumerate(tabelas_filtradas.items(), 1):
             prefixo = f"[{i:>3}/{total}] {tabela:<30}"
             estrategia = cfg["estrategia"]
             try:

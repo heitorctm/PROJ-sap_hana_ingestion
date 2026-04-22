@@ -35,6 +35,7 @@ def carregar_tabelas() -> dict[str, dict]:
             "coluna_watermark": cfg.get("coluna_watermark"),
             "colunas": cfg.get("colunas") or [],
             "carga_inicial": cfg.get("carga_inicial") or {},
+            "frequencia": cfg.get("frequencia", "diaria"),
         }
         for tabela, cfg in (dados or {}).items()
     }

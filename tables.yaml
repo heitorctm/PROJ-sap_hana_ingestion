@@ -28,8 +28,8 @@ OINV:
     - DocEntry
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2023-07-01"
-    fim: "2026-04-22"
+    inicio: "2023-01-01"
+    fim: "2023-12-31"
     janela_meses: 3
   colunas:
     - DocEntry
@@ -147,6 +147,7 @@ VW_PBI_RANKING_VENDAS_V3:
 ITM1:
   tipo: tabela
   estrategia: full_reload
+  frequencia: semanal
   chave_primaria:
     - ItemCode
     - PriceList
@@ -188,6 +189,7 @@ OITM:
 OITW:
   tipo: tabela
   estrategia: full_reload
+  frequencia: semanal
   chave_primaria:
     - ItemCode
     - WhsCode
@@ -295,7 +297,7 @@ OWHS:
   colunas:
     - WhsCode
     - WhsName
-    - BPLId
+    - BPLid
 
 NFN1:
   tipo: tabela
@@ -350,7 +352,7 @@ BTF1:
     fim: null
     janela_meses: null
   colunas:
-    - BTLName
+    - BPLName
     - Credit
     - DueDate
     - Line_ID
@@ -369,7 +371,7 @@ OBTF:
     fim: null
     janela_meses: null
   colunas:
-    - BTFStatus
+    - BtfStatus
     - Memo
     - TransId
 

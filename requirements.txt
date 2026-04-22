@@ -4,3 +4,4 @@ sqlalchemy-hana
 pyodbc
 pyyaml
 python-dotenv
+python-dateutil

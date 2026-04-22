@@ -16,7 +16,7 @@ SQLSERVER_SERVER = os.getenv("SQLSERVER_SERVER")
 SQLSERVER_DATABASE = os.getenv("SQLSERVER_DATABASE")
 SQLSERVER_DRIVER = os.getenv("SQLSERVER_DRIVER", "ODBC Driver 17 for SQL Server")
 
-TOP_N = 1000
+TOP_N = 10000
 CHUNK_SIZE = 10000
 HANA_TIMEOUT = 30000
 QUERY_TIMEOUT = 300000
@@ -34,6 +34,7 @@ def carregar_tabelas() -> dict[str, dict]:
             "chave_primaria": cfg.get("chave_primaria") or [],
             "coluna_watermark": cfg.get("coluna_watermark"),
             "colunas": cfg.get("colunas") or [],
+            "carga_inicial": cfg.get("carga_inicial") or {},
         }
         for tabela, cfg in (dados or {}).items()
     }

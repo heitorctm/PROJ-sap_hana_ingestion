@@ -1,11 +1,10 @@
-import time
 from typing import Any
 
 import pyodbc
 from sqlalchemy import text
 
 from ingestion.config import CHUNK_SIZE, HANA_SCHEMA, RAW_SCHEMA, TOP_N
-from ingestion.metadata import buscar_metadados_tabela, mapear_tipo_hana_para_sqlserver
+from ingestion.metadata import mapear_tipo_hana_para_sqlserver
 
 
 def nome_sqlserver(nome: str) -> str:
@@ -35,23 +34,36 @@ def garantir_schema_raw(sql_conn: pyodbc.Connection) -> None:
     sql_conn.commit()
 
 
-def recriar_tabela_raw(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
+def _ddl_colunas(metadados: list[dict[str, Any]]) -> str:
     colunas_sql = [
         f"    {nome_sqlserver(col['COLUMN_NAME'])} {mapear_tipo_hana_para_sqlserver(col)} NULL"
         for col in metadados
     ]
     colunas_sql.append("    [_ingestao_em] DATETIME2 DEFAULT GETDATE()")
-    definicao_colunas = ",\n".join(colunas_sql)
+    return ",\n".join(colunas_sql)
 
+
+def recriar_tabela_raw(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
     ddl = f"""
     IF OBJECT_ID('{RAW_SCHEMA}.{tabela}', 'U') IS NOT NULL
         DROP TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)};
 
     CREATE TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} (
-{definicao_colunas}
+{_ddl_colunas(metadados)}
     );
     """
+    cursor = sql_conn.cursor()
+    cursor.execute(ddl)
+    sql_conn.commit()
 
+
+def criar_tabela_se_nao_existir(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
+    ddl = f"""
+    IF OBJECT_ID('{RAW_SCHEMA}.{tabela}', 'U') IS NULL
+        CREATE TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} (
+{_ddl_colunas(metadados)}
+        );
+    """
     cursor = sql_conn.cursor()
     cursor.execute(ddl)
     sql_conn.commit()
@@ -89,12 +101,12 @@ def deletar_por_chave(
     sql_conn.commit()
 
 
-def montar_select_hana(tabela: str, metadados: list[dict[str, Any]], filtro_watermark: str | None = None) -> str:
+def montar_select_hana(tabela: str, metadados: list[dict[str, Any]], filtro: str | None = None, com_top: bool = True) -> str:
     colunas = ", ".join(nome_hana(col["COLUMN_NAME"]) for col in metadados)
-    top = f"TOP {TOP_N} " if TOP_N else ""
+    top = f"TOP {TOP_N} " if (com_top and TOP_N) else ""
     sql = f"SELECT {top}{colunas} FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela)}"
-    if filtro_watermark:
-        sql += f" WHERE {filtro_watermark}"
+    if filtro:
+        sql += f" WHERE {filtro}"
     return sql
 
 
@@ -104,7 +116,7 @@ def montar_insert_sqlserver(tabela: str, metadados: list[dict[str, Any]]) -> str
     return f"INSERT INTO {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} ({colunas}) VALUES ({placeholders})"
 
 
-def _executar_carga(hana_engine, sql_conn, sql_select, sql_insert) -> int:
+def executar_carga(hana_engine, sql_conn: pyodbc.Connection, sql_select: str, sql_insert: str) -> int:
     total_linhas = 0
     cursor_destino = sql_conn.cursor()
     cursor_destino.fast_executemany = True
@@ -123,121 +135,3 @@ def _executar_carga(hana_engine, sql_conn, sql_select, sql_insert) -> int:
             total_linhas += len(lote)
 
     return total_linhas
-
-
-def carregar_tabela(
-    hana_engine,
-    sql_conn: pyodbc.Connection,
-    tabela: str,
-    colunas: list[str],
-    tipo: str = "tabela",
-) -> tuple[int, float]:
-    inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
-
-    if not metadados:
-        raise ValueError(f"Tabela sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
-
-    recriar_tabela_raw(sql_conn, tabela, metadados)
-
-    sql_select = montar_select_hana(tabela, metadados)
-    sql_insert = montar_insert_sqlserver(tabela, metadados)
-    total_linhas = _executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
-
-    duracao = time.perf_counter() - inicio
-    return total_linhas, duracao
-
-
-def carregar_incremental_upsert(
-    hana_engine,
-    sql_conn: pyodbc.Connection,
-    tabela: str,
-    colunas: list[str],
-    tipo: str,
-    chave_primaria: list[str],
-    coluna_watermark: str,
-    watermark_valor,
-) -> tuple[int, float]:
-    inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
-
-    if not metadados:
-        raise ValueError(f"Tabela sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
-
-    filtro = f"{nome_hana(coluna_watermark)} > '{watermark_valor}'" if watermark_valor else None
-    sql_select = montar_select_hana(tabela, metadados, filtro)
-    sql_insert = montar_insert_sqlserver(tabela, metadados)
-
-    indices_chave = [
-        next(i for i, m in enumerate(metadados) if m["COLUMN_NAME"] == c)
-        for c in chave_primaria
-    ]
-
-    total_linhas = 0
-    cursor_destino = sql_conn.cursor()
-    cursor_destino.fast_executemany = True
-
-    with hana_engine.connect() as conn:
-        result = conn.execution_options(stream_results=True).execute(text(sql_select))
-
-        while True:
-            rows = result.fetchmany(CHUNK_SIZE)
-            if not rows:
-                break
-
-            lote = [tuple(normalizar_valor(v) for v in row) for row in rows]
-            chaves_lote = [tuple(row[i] for i in indices_chave) for row in lote]
-            deletar_por_chave(sql_conn, tabela, chave_primaria, chaves_lote)
-            cursor_destino.executemany(sql_insert, lote)
-            sql_conn.commit()
-            total_linhas += len(lote)
-
-    duracao = time.perf_counter() - inicio
-    return total_linhas, duracao
-
-
-def carregar_incremental_append(
-    hana_engine,
-    sql_conn: pyodbc.Connection,
-    tabela: str,
-    colunas: list[str],
-    tipo: str,
-    coluna_watermark: str,
-    watermark_valor,
-) -> tuple[int, float]:
-    inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
-
-    if not metadados:
-        raise ValueError(f"Tabela sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
-
-    filtro = f"{nome_hana(coluna_watermark)} > '{watermark_valor}'" if watermark_valor else None
-    sql_select = montar_select_hana(tabela, metadados, filtro)
-    sql_insert = montar_insert_sqlserver(tabela, metadados)
-    total_linhas = _executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
-
-    duracao = time.perf_counter() - inicio
-    return total_linhas, duracao
-
-
-def carregar_full_reload(
-    hana_engine,
-    sql_conn: pyodbc.Connection,
-    tabela: str,
-    colunas: list[str],
-    tipo: str,
-) -> tuple[int, float]:
-    inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
-
-    if not metadados:
-        raise ValueError(f"Tabela sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
-
-    truncar_tabela(sql_conn, tabela)
-
-    sql_select = montar_select_hana(tabela, metadados)
-    sql_insert = montar_insert_sqlserver(tabela, metadados)
-    total_linhas = _executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
-
-    duracao = time.perf_counter() - inicio
-    return total_linhas, duracao

@@ -8,12 +8,7 @@ from ingestion.connections import (
     testar_conexao_hana,
     testar_conexao_sqlserver,
 )
-from ingestion.loader import (
-    carregar_full_reload,
-    carregar_incremental_append,
-    carregar_incremental_upsert,
-)
-from ingestion.watermark import get_max_watermark
+from ingestion.strategies import executar_append, executar_full_reload, executar_upsert
 
 
 def main() -> None:
@@ -64,37 +59,20 @@ def main() -> None:
 
                 match estrategia:
                     case "incremental_upsert":
-                        watermark = get_max_watermark(sql_conn, tabela, cfg["coluna_watermark"])
-                        linhas, segundos = carregar_incremental_upsert(
-                            hana_engine,
-                            sql_conn,
-                            tabela,
-                            cfg["colunas"],
-                            cfg["tipo"],
-                            cfg["chave_primaria"],
-                            cfg["coluna_watermark"],
-                            watermark,
+                        linhas, segundos = executar_upsert(
+                            hana_engine, sql_conn, tabela,
+                            cfg["colunas"], cfg["tipo"],
+                            cfg["chave_primaria"], cfg["coluna_watermark"],
                         )
-
                     case "incremental_append":
-                        watermark = get_max_watermark(sql_conn, tabela, cfg["coluna_watermark"])
-                        linhas, segundos = carregar_incremental_append(
-                            hana_engine,
-                            sql_conn,
-                            tabela,
-                            cfg["colunas"],
-                            cfg["tipo"],
-                            cfg["coluna_watermark"],
-                            watermark,
+                        linhas, segundos = executar_append(
+                            hana_engine, sql_conn, tabela,
+                            cfg["colunas"], cfg["tipo"], cfg["coluna_watermark"],
                         )
-
                     case _:
-                        linhas, segundos = carregar_full_reload(
-                            hana_engine,
-                            sql_conn,
-                            tabela,
-                            cfg["colunas"],
-                            cfg["tipo"],
+                        linhas, segundos = executar_full_reload(
+                            hana_engine, sql_conn, tabela,
+                            cfg["colunas"], cfg["tipo"],
                         )
 
                 print(f"\r{prefixo} [{estrategia}] OK — {linhas:>8} linhas em {segundos:>8.2f}s")

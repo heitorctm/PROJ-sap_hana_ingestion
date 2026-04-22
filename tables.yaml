@@ -5,8 +5,12 @@
 #   tipo: tabela | view
 #   estrategia: incremental_upsert | incremental_append | full_reload
 #   chave_primaria:
-#     - COLUNA_PK          # pode ser composta (lista de colunas)
-#   coluna_watermark: COLUNA_DATA   # coluna usada para detectar registros novos/alterados
+#     - COLUNA_PK
+#   coluna_watermark: COLUNA_DATA
+#   carga_inicial:
+#     inicio: "YYYY-MM-DD"   # null = sem filtro de data
+#     fim: "YYYY-MM-DD"      # null = sem filtro de data
+#     janela_meses: 3        # null = carrega tudo de uma vez
 #   colunas:
 #     - COLUNA1
 #     - COLUNA2
@@ -23,16 +27,25 @@ OINV:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  carga_inicial:
+    inicio: "2023-07-01"
+    fim: "2026-04-22"
+    janela_meses: 3
   colunas:
     - DocEntry
+    - DocNum
+    - DocDate
+    - DocDueDate
+    - DocStatus
+    - DocTotal
     - UpdateDate
+    - UpdateTS
+    - BPLId
     - BPLName
     - CANCELED
     - CardCode
     - CardName
     - Comments
-    - DocDate
-    - DocNum
     - Serial
     - SlpCode
     - U_chamadoSults
@@ -45,6 +58,10 @@ VW_FAROL_MAPA_RELACAO:
   estrategia: full_reload
   chave_primaria: []
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - Orçamento
     - Orc_Cancelado
@@ -61,6 +78,10 @@ VW_PBI_RANKING_VENDAS_V3:
   estrategia: incremental_append
   chave_primaria: []
   coluna_watermark: DATA
+  carga_inicial:
+    inicio: "2023-10-01"
+    fim: "2026-04-22"
+    janela_meses: 3
   colunas:
     - NF/OP
     - DATA
@@ -87,6 +108,10 @@ VW_PBI_RANKING_VENDAS_V3:
   chave_primaria:
     - Code
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - Code
     - Name
@@ -97,6 +122,10 @@ VW_PBI_RANKING_VENDAS_V3:
   chave_primaria:
     - Code
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - Code
     - Name
@@ -107,6 +136,10 @@ VW_PBI_RANKING_VENDAS_V3:
   chave_primaria:
     - Code
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - Code
     - Name
@@ -118,6 +151,10 @@ ITM1:
     - ItemCode
     - PriceList
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - ItemCode
     - Price
@@ -129,13 +166,20 @@ OITM:
   chave_primaria:
     - ItemCode
   coluna_watermark: UpdateDate
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - ItemCode
     - UpdateDate
+    - UpdateTS
     - FirmCode
     - InvntryUom
     - InvntItem
     - ItemName
+    - OnHand
+    - ItmsGrpCod
     - U_CLASSE
     - U_FAMILIA
     - U_SUB_CLASSE
@@ -148,6 +192,10 @@ OITW:
     - ItemCode
     - WhsCode
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - ItemCode
     - WhsCode
@@ -159,6 +207,10 @@ OACT:
   chave_primaria:
     - AcctCode
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - AcctCode
     - AcctName
@@ -167,10 +219,16 @@ JDT1:
   tipo: tabela
   estrategia: incremental_append
   chave_primaria:
-    - Account
-    - RefDate
+    - TransId
+    - Line_ID
   coluna_watermark: RefDate
+  carga_inicial:
+    inicio: "2020-01-01"
+    fim: "2026-04-22"
+    janela_meses: 3
   colunas:
+    - TransId
+    - Line_ID
     - Account
     - Credit
     - Debit
@@ -182,13 +240,19 @@ OCRD:
   chave_primaria:
     - CardCode
   coluna_watermark: UpdateDate
+  carga_inicial:
+    inicio: "2023-06-01"
+    fim: "2026-04-22"
+    janela_meses: 6
   colunas:
     - CardCode
     - UpdateDate
+    - UpdateTS
     - CardFName
     - GroupCode
-    - Password
     - CardType
+    - Balance
+    - Password
 
 OCRG:
   tipo: tabela
@@ -196,6 +260,10 @@ OCRG:
   chave_primaria:
     - GroupCode
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - GroupCode
     - GroupName
@@ -206,6 +274,10 @@ OBPL:
   chave_primaria:
     - BPLId
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - BPLId
     - BPLName
@@ -216,6 +288,10 @@ OWHS:
   chave_primaria:
     - WhsCode
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - WhsCode
     - WhsName
@@ -227,6 +303,10 @@ NFN1:
   chave_primaria:
     - SeqCode
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - SeqCode
     - SeqName
@@ -237,6 +317,10 @@ OSLP:
   chave_primaria:
     - SlpCode
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - SlpCode
     - SlpName
@@ -247,6 +331,10 @@ OSLP:
   chave_primaria:
     - Code
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - Code
     - Name
@@ -257,6 +345,10 @@ BTF1:
   chave_primaria:
     - Line_ID
   coluna_watermark: RefDate
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - BTLName
     - Credit
@@ -272,6 +364,10 @@ OBTF:
   chave_primaria:
     - TransId
   coluna_watermark: null
+  carga_inicial:
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - BTFStatus
     - Memo
@@ -284,6 +380,10 @@ PCH6:
     - DocEntry
     - InstlmntID
   coluna_watermark: DueDate
+  carga_inicial:
+    inicio: "2023-07-01"
+    fim: "2026-04-22"
+    janela_meses: 3
   colunas:
     - DocEntry
     - DueDate
@@ -298,15 +398,24 @@ OPCH:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  carga_inicial:
+    inicio: "2024-11-01"
+    fim: "2026-04-22"
+    janela_meses: 6
   colunas:
     - DocEntry
+    - DocDate
+    - DocDueDate
+    - DocStatus
+    - DocTotal
     - UpdateDate
+    - UpdateTS
+    - BPLId
     - BPLName
     - CANCELED
     - CardCode
     - CardName
     - Comments
-    - DocDate
     - PeyMethod
     - SeqCode
     - Serial
@@ -319,6 +428,10 @@ INV6:
     - DocEntry
     - InstlmntID
   coluna_watermark: DueDate
+  carga_inicial:
+    inicio: "2023-07-01"
+    fim: "2026-04-22"
+    janela_meses: 3
   colunas:
     - DocEntry
     - DueDate

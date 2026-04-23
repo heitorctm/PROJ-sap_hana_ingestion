@@ -260,8 +260,8 @@ ORDER BY inicio_em DESC
 | OCRD | tabela | incremental_append | diaria | UpdateDate |
 | OITM | tabela | incremental_append | diaria | UpdateDate |
 | JDT1 | tabela | incremental_append | diaria | RefDate |
-| INV6 | tabela | incremental_append | diaria | DueDate |
-| PCH6 | tabela | incremental_append | diaria | DueDate |
+| INV6 | tabela | full_reload | diaria | — |
+| PCH6 | tabela | full_reload | diaria | — |
 | BTF1 | tabela | incremental_append | diaria | RefDate |
 | ITM1 | tabela | full_reload | **semanal** | — |
 | OITW | tabela | full_reload | **semanal** | — |
@@ -282,3 +282,5 @@ ORDER BY inicio_em DESC
 > **VW_FAROL_MAPA_RELACAO**: view de status de documentos (orçamento → pedido → nota). Requer full_reload pois o status de qualquer documento pode mudar a qualquer momento.
 >
 > **ITM1** e **OITW**: tabelas de preço e estoque por armazém. Sem coluna de data para incremental — full_reload semanal fora do horário comercial.
+>
+> **INV6** e **PCH6**: tabelas de parcelas de recebimento/pagamento. Não possuem coluna de data de criação ou atualização — `DueDate` é a data de vencimento, não confiável como watermark. `Status` e `Paid` mudam ao longo do tempo (quitação, renegociação). Full_reload diário garante consistência.

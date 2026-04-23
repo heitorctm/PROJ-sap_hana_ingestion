@@ -378,15 +378,15 @@ OBTF:
 
 PCH6:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - InstlmntID
-  coluna_watermark: DueDate
+  coluna_watermark: null
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-22"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - DueDate
@@ -426,15 +426,15 @@ OPCH:
 
 INV6:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - InstlmntID
-  coluna_watermark: DueDate
+  coluna_watermark: null
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-22"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - DueDate

@@ -1,4 +1,4 @@
-# fast-sap-dw — Ingestão SAP HANA → SQL Server
+# fast-dw — Ingestão SAP HANA → SQL Server
 
 Pipeline de extração de dados do SAP Business One (SAP HANA) para SQL Server. Responsável pela camada **raw** da arquitetura medallion.
 

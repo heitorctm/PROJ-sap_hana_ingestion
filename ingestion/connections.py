@@ -11,7 +11,9 @@ from ingestion.config import (
     QUERY_TIMEOUT,
     SQLSERVER_DATABASE,
     SQLSERVER_DRIVER,
+    SQLSERVER_PASSWORD,
     SQLSERVER_SERVER,
+    SQLSERVER_USER,
 )
 
 
@@ -32,13 +34,23 @@ def criar_engine_hana():
 
 
 def criar_conexao_sqlserver() -> pyodbc.Connection:
-    conn_str = (
-        f"DRIVER={{{SQLSERVER_DRIVER}}};"
-        f"SERVER={SQLSERVER_SERVER};"
-        f"DATABASE={SQLSERVER_DATABASE};"
-        "Trusted_Connection=yes;"
-        "TrustServerCertificate=yes;"
-    )
+    if SQLSERVER_USER and SQLSERVER_PASSWORD:
+        conn_str = (
+            f"DRIVER={{{SQLSERVER_DRIVER}}};"
+            f"SERVER={SQLSERVER_SERVER};"
+            f"DATABASE={SQLSERVER_DATABASE};"
+            f"UID={SQLSERVER_USER};"
+            f"PWD={SQLSERVER_PASSWORD};"
+            "TrustServerCertificate=yes;"
+        )
+    else:
+        conn_str = (
+            f"DRIVER={{{SQLSERVER_DRIVER}}};"
+            f"SERVER={SQLSERVER_SERVER};"
+            f"DATABASE={SQLSERVER_DATABASE};"
+            "Trusted_Connection=yes;"
+            "TrustServerCertificate=yes;"
+        )
     return pyodbc.connect(conn_str)
 
 

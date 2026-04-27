@@ -7,7 +7,7 @@ from uuid import uuid4
 from ingestion.audit import registrar_erro, registrar_inicio, registrar_sucesso
 from ingestion.config import carregar_tabelas
 from ingestion.connections import criar_conexao_sqlserver, criar_engine_hana, testar_conexao_hana, testar_conexao_sqlserver
-from ingestion.strategies import executar_append, executar_full_reload, executar_upsert
+from ingestion.strategies import executar_append, executar_full_reload, executar_snapshot_diario, executar_upsert, executar_via_cabecalho
 
 
 def main() -> None:
@@ -87,6 +87,19 @@ def main() -> None:
                         linhas, segundos = executar_append(
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"], cfg["coluna_watermark"],
+                        )
+                    case "incremental_via_cabecalho":
+                        linhas, segundos = executar_via_cabecalho(
+                            hana_engine, sql_conn, tabela,
+                            cfg["colunas"], cfg["tipo"],
+                            cfg["chave_primaria"],
+                            cfg["tabela_cabecalho"],
+                            cfg["coluna_watermark_cabecalho"],
+                        )
+                    case "snapshot_diario":
+                        linhas, segundos = executar_snapshot_diario(
+                            hana_engine, sql_conn, tabela,
+                            cfg["colunas"], cfg["tipo"],
                         )
                     case _:
                         linhas, segundos = executar_full_reload(

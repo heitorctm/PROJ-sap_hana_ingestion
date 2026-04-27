@@ -8,7 +8,7 @@ from ingestion.config import carregar_tabelas
 from ingestion.connections import criar_conexao_sqlserver, criar_engine_hana, testar_conexao_hana, testar_conexao_sqlserver
 from ingestion.loader import criar_tabela_se_nao_existir, executar_carga, garantir_schema_raw, montar_insert_sqlserver, montar_select_hana
 from ingestion.metadata import buscar_metadados_tabela
-from ingestion.strategies import executar_janela, gerar_janelas
+from ingestion.strategies import executar_janela, executar_janela_via_cabecalho, gerar_janelas
 
 
 def main() -> None:
@@ -63,6 +63,8 @@ def main() -> None:
             fim = ci.get("fim")
             janela_meses = ci.get("janela_meses")
             coluna_watermark = cfg["coluna_watermark"]
+            tabela_cabecalho = cfg.get("tabela_cabecalho")
+            coluna_watermark_cabecalho = cfg.get("coluna_watermark_cabecalho")
             estrategia = cfg["estrategia"]
             frequencia = cfg["frequencia"]
 
@@ -73,7 +75,7 @@ def main() -> None:
                 if not metadados:
                     raise ValueError(f"Sem metadados no HANA para {tabela}")
 
-                criar_tabela_se_nao_existir(sql_conn, tabela, metadados)
+                criar_tabela_se_nao_existir(sql_conn, tabela, metadados, snapshot=(estrategia == "snapshot_diario"))
                 registrar_inicio(sql_conn, execucao_id, tabela, estrategia, frequencia)
                 inicio_tabela = time.perf_counter()
 
@@ -88,6 +90,26 @@ def main() -> None:
                         linhas = executar_janela(
                             hana_engine, sql_conn, tabela, metadados,
                             coluna_watermark, j_inicio, j_fim,
+                        )
+                        total_linhas += linhas
+                        print(f"\r{prefixo} janela {j:>2}/{len(janelas)} [{j_inicio} → {j_fim}] OK — {linhas:>8} linhas")
+
+                    segundos = time.perf_counter() - inicio_tabela
+                    print(f"{prefixo} TOTAL: {total_linhas:>8} linhas em {len(janelas)} janelas — {segundos:.2f}s")
+
+                elif inicio and fim and janela_meses and tabela_cabecalho and coluna_watermark_cabecalho:
+                    janelas = gerar_janelas(inicio, fim, janela_meses)
+                    total_linhas = 0
+                    for j, (j_inicio, j_fim) in enumerate(janelas, 1):
+                        print(
+                            f"{prefixo} janela {j:>2}/{len(janelas)} [{j_inicio} → {j_fim}]...",
+                            end="", flush=True,
+                        )
+                        linhas = executar_janela_via_cabecalho(
+                            hana_engine, sql_conn, tabela, metadados,
+                            cfg["chave_primaria"],
+                            tabela_cabecalho, coluna_watermark_cabecalho,
+                            j_inicio, j_fim,
                         )
                         total_linhas += linhas
                         print(f"\r{prefixo} janela {j:>2}/{len(janelas)} [{j_inicio} → {j_fim}] OK — {linhas:>8} linhas")

@@ -66,15 +66,17 @@ OINV:
 
 INV1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: OINV
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -128,15 +130,17 @@ OQUT:
 
 QUT1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: OQUT
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -192,15 +196,17 @@ ORIN:
 
 RIN1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: ORIN
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -247,15 +253,17 @@ ORDR:
 
 RDR1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: ORDR
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -269,15 +277,17 @@ RDR1:
 
 INV3:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - ExpnsCode
   coluna_watermark: null
+  tabela_cabecalho: OINV
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - ExpnsCode
@@ -285,42 +295,48 @@ INV3:
 
 INV12:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
   coluna_watermark: null
+  tabela_cabecalho: OINV
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - MainUsage
 
 QUT12:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
   coluna_watermark: null
+  tabela_cabecalho: OQUT
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - MainUsage
 
 RIN12:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
   coluna_watermark: null
+  tabela_cabecalho: ORIN
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
+    inicio: "2025-04-27"
+    fim: "2026-04-27"
+    janela_meses: 3
   colunas:
     - DocEntry
     - MainUsage
@@ -383,7 +399,7 @@ OUSG:
 
 ITM1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: snapshot_diario
   frequencia: semanal
   chave_primaria:
     - ItemCode
@@ -425,7 +441,7 @@ OITM:
 
 OITW:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: snapshot_diario
   frequencia: semanal
   chave_primaria:
     - ItemCode
@@ -628,7 +644,7 @@ OBTF:
 
 PCH6:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: snapshot_diario
   chave_primaria:
     - DocEntry
     - InstlmntID
@@ -676,7 +692,7 @@ OPCH:
 
 INV6:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: snapshot_diario
   chave_primaria:
     - DocEntry
     - InstlmntID

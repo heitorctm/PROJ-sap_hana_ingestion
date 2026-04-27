@@ -28,8 +28,8 @@ OINV:
     - DocEntry
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
-    fim: "2026-04-22"
+    inicio: "2023-01-01"
+    fim: "2026-04-27"
     janela_meses: 3
   colunas:
     - DocEntry
@@ -74,7 +74,7 @@ INV1:
   tabela_cabecalho: OINV
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -102,7 +102,7 @@ OQUT:
     - DocEntry
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -138,7 +138,7 @@ QUT1:
   tabela_cabecalho: OQUT
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -166,7 +166,7 @@ ORIN:
     - DocEntry
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -204,7 +204,7 @@ RIN1:
   tabela_cabecalho: ORIN
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -232,7 +232,7 @@ ORDR:
     - DocEntry
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -261,7 +261,7 @@ RDR1:
   tabela_cabecalho: ORDR
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -285,7 +285,7 @@ INV3:
   tabela_cabecalho: OINV
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -302,7 +302,7 @@ INV12:
   tabela_cabecalho: OINV
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -318,7 +318,7 @@ QUT12:
   tabela_cabecalho: OQUT
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -334,7 +334,7 @@ RIN12:
   tabela_cabecalho: ORIN
   coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2025-04-27"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -421,7 +421,7 @@ OITM:
     - ItemCode
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -478,7 +478,7 @@ JDT1:
     - Line_ID
   coluna_watermark: RefDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -496,7 +496,7 @@ OCRD:
     - CardCode
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -612,7 +612,7 @@ BTF1:
     - Line_ID
   coluna_watermark: RefDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
@@ -668,7 +668,7 @@ OPCH:
     - DocEntry
   coluna_watermark: UpdateDate
   carga_inicial:
-    inicio: "2026-01-01"
+    inicio: "2023-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:

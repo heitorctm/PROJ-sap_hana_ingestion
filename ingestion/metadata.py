@@ -14,6 +14,12 @@ def buscar_metadados_tabela(hana_engine, tabela: str, colunas: list[str], tipo: 
             sys_view = "SYS.TABLE_COLUMNS"
             nome_col = "TABLE_NAME"
 
+    case_order = " ".join(
+        f"WHEN COLUMN_NAME = '{col}' THEN {i}"
+        for i, col in enumerate(colunas)
+    )
+    filtro = ", ".join(f"'{c}'" for c in colunas)
+
     sql = text(
         f"""
         SELECT
@@ -25,7 +31,8 @@ def buscar_metadados_tabela(hana_engine, tabela: str, colunas: list[str], tipo: 
         FROM {sys_view}
         WHERE SCHEMA_NAME = :schema
           AND {nome_col} = :tabela
-        ORDER BY POSITION
+          AND COLUMN_NAME IN ({filtro})
+        ORDER BY CASE {case_order} ELSE {len(colunas)} END
         """
     )
 
@@ -38,8 +45,6 @@ def buscar_metadados_tabela(hana_engine, tabela: str, colunas: list[str], tipo: 
         row_normalizado = {str(k).upper(): v for k, v in row_dict.items()}
         nome = row_normalizado.get("COLUMN_NAME")
         if not nome:
-            continue
-        if colunas and nome not in colunas:
             continue
         metadados.append(
             {

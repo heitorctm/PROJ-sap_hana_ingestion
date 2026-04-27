@@ -66,15 +66,15 @@ OINV:
 
 INV1:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
-  coluna_watermark: UpdateDate
+  coluna_watermark: null
   carga_inicial:
-    inicio: "2026-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -92,7 +92,6 @@ INV1:
     - CFOPCode
     - U_PRECO_BDI
     - U_PRECO_CUSTO
-    - UpdateDate
 
 OQUT:
   tipo: tabela
@@ -129,15 +128,15 @@ OQUT:
 
 QUT1:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
-  coluna_watermark: UpdateDate
+  coluna_watermark: null
   carga_inicial:
-    inicio: "2026-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -155,7 +154,6 @@ QUT1:
     - CFOPCode
     - U_PRECO_BDI
     - U_PRECO_CUSTO
-    - UpdateDate
 
 ORIN:
   tipo: tabela
@@ -194,15 +192,15 @@ ORIN:
 
 RIN1:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
-  coluna_watermark: UpdateDate
+  coluna_watermark: null
   carga_inicial:
-    inicio: "2026-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -220,7 +218,6 @@ RIN1:
     - CFOPCode
     - U_PRECO_BDI
     - U_PRECO_CUSTO
-    - UpdateDate
 
 ORDR:
   tipo: tabela
@@ -250,15 +247,15 @@ ORDR:
 
 RDR1:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
-  coluna_watermark: UpdateDate
+  coluna_watermark: null
   carga_inicial:
-    inicio: "2026-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -269,7 +266,6 @@ RDR1:
     - Dscription
     - Quantity
     - LineStatus
-    - UpdateDate
 
 INV3:
   tipo: tabela
@@ -548,6 +544,8 @@ NFN1:
   tipo: tabela
   estrategia: full_reload
   chave_primaria:
+    - ObjectCode
+    - DocSubType
     - SeqCode
   coluna_watermark: null
   carga_inicial:
@@ -555,6 +553,8 @@ NFN1:
     fim: null
     janela_meses: null
   colunas:
+    - ObjectCode
+    - DocSubType
     - SeqCode
     - SeqName
 
@@ -591,26 +591,29 @@ BTF1:
   tipo: tabela
   estrategia: incremental_append
   chave_primaria:
+    - BatchNum
+    - TransId
     - Line_ID
-    - ShortName
   coluna_watermark: RefDate
   carga_inicial:
     inicio: "2026-01-01"
     fim: "2026-04-27"
     janela_meses: 3
   colunas:
+    - BatchNum
+    - TransId
+    - Line_ID
     - BPLName
     - Credit
     - DueDate
-    - Line_ID
     - RefDate
     - ShortName
-    - TransId
 
 OBTF:
   tipo: tabela
   estrategia: full_reload
   chave_primaria:
+    - BatchNum
     - TransId
   coluna_watermark: null
   carga_inicial:
@@ -618,9 +621,10 @@ OBTF:
     fim: null
     janela_meses: null
   colunas:
+    - BatchNum
+    - TransId
     - BtfStatus
     - Memo
-    - TransId
 
 PCH6:
   tipo: tabela

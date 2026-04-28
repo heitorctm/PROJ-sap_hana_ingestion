@@ -70,6 +70,25 @@ def criar_tabela_se_nao_existir(sql_conn: pyodbc.Connection, tabela: str, metada
     sql_conn.commit()
 
 
+def adicionar_colunas_faltantes(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
+    cursor = sql_conn.cursor()
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?",
+        RAW_SCHEMA, tabela,
+    )
+    existentes = {row[0].upper() for row in cursor.fetchall()}
+    for col in metadados:
+        nome = col["COLUMN_NAME"]
+        if nome.upper() not in existentes:
+            tipo_sql = mapear_tipo_hana_para_sqlserver(col)
+            cursor.execute(
+                f"ALTER TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} "
+                f"ADD {nome_sqlserver(nome)} {tipo_sql} NULL"
+            )
+            sql_conn.commit()
+            print(f"[schema] coluna adicionada: {tabela}.{nome} ({tipo_sql})")
+
+
 def truncar_tabela(sql_conn: pyodbc.Connection, tabela: str) -> None:
     cursor = sql_conn.cursor()
     cursor.execute(f"TRUNCATE TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)}")

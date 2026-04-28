@@ -7,6 +7,8 @@ from uuid import uuid4
 from ingestion.audit import registrar_erro, registrar_inicio, registrar_sucesso
 from ingestion.config import carregar_tabelas
 from ingestion.connections import criar_conexao_sqlserver, criar_engine_hana, testar_conexao_hana, testar_conexao_sqlserver
+from ingestion.loader import adicionar_colunas_faltantes
+from ingestion.metadata import buscar_metadados_tabela
 from ingestion.strategies import executar_append, executar_full_reload, executar_snapshot_diario, executar_upsert, executar_via_cabecalho
 
 
@@ -73,6 +75,8 @@ def main() -> None:
             estrategia = cfg["estrategia"]
             frequencia = cfg["frequencia"]
             try:
+                metadados = buscar_metadados_tabela(hana_engine, tabela, cfg["colunas"], cfg["tipo"])
+                adicionar_colunas_faltantes(sql_conn, tabela, metadados)
                 print(f"{prefixo} [{estrategia}] carregando...", end="", flush=True)
                 registrar_inicio(sql_conn, execucao_id, tabela, estrategia, frequencia)
 

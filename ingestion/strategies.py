@@ -254,6 +254,14 @@ def executar_janela(
     janela_inicio: date,
     janela_fim: date,
 ) -> int:
+    cursor = sql_conn.cursor()
+    cursor.execute(
+        f"DELETE FROM {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} "
+        f"WHERE {nome_sqlserver(coluna_watermark)} >= ? AND {nome_sqlserver(coluna_watermark)} <= ?",
+        janela_inicio, janela_fim,
+    )
+    sql_conn.commit()
+
     filtro = (
         f"{nome_hana(coluna_watermark)} >= '{janela_inicio}' "
         f"AND {nome_hana(coluna_watermark)} <= '{janela_fim}'"

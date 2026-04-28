@@ -30,7 +30,7 @@ OINV:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - DocEntry
@@ -103,7 +103,7 @@ OQUT:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - DocEntry
@@ -166,7 +166,7 @@ ORIN:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - DocEntry
@@ -231,7 +231,7 @@ ORDR:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - DocEntry
@@ -411,7 +411,7 @@ OITM:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - ItemCode
@@ -468,7 +468,7 @@ JDT1:
   coluna_watermark: RefDate
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - TransId
@@ -487,7 +487,7 @@ OCRD:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - CardCode
@@ -622,7 +622,7 @@ OPCH:
   coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
-    fim: "2026-04-27"
+    fim: null
     janela_meses: 3
   colunas:
     - DocEntry

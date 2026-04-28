@@ -1,12 +1,13 @@
 import sys
 import time
 import traceback
+from datetime import date
 from uuid import uuid4
 
 from ingestion.audit import registrar_erro, registrar_inicio, registrar_sucesso
 from ingestion.config import carregar_tabelas
 from ingestion.connections import criar_conexao_sqlserver, criar_engine_hana, testar_conexao_hana, testar_conexao_sqlserver
-from ingestion.loader import criar_tabela_se_nao_existir, executar_carga, garantir_schema_raw, montar_insert_sqlserver, montar_select_hana
+from ingestion.loader import adicionar_colunas_faltantes, criar_tabela_se_nao_existir, executar_carga, garantir_schema_raw, montar_insert_sqlserver, montar_select_hana
 from ingestion.metadata import buscar_metadados_tabela
 from ingestion.strategies import executar_janela, executar_janela_via_cabecalho, gerar_janelas
 
@@ -60,7 +61,7 @@ def main() -> None:
             prefixo = f"[{i:>3}/{total}] {tabela:<30}"
             ci = cfg["carga_inicial"]
             inicio = ci.get("inicio")
-            fim = ci.get("fim")
+            fim = ci.get("fim") or (date.today().isoformat() if ci.get("inicio") else None)
             janela_meses = ci.get("janela_meses")
             coluna_watermark = cfg["coluna_watermark"]
             tabela_cabecalho = cfg.get("tabela_cabecalho")
@@ -76,6 +77,7 @@ def main() -> None:
                     raise ValueError(f"Sem metadados no HANA para {tabela}")
 
                 criar_tabela_se_nao_existir(sql_conn, tabela, metadados)
+                adicionar_colunas_faltantes(sql_conn, tabela, metadados)
                 registrar_inicio(sql_conn, execucao_id, tabela, estrategia, frequencia)
                 inicio_tabela = time.perf_counter()
 

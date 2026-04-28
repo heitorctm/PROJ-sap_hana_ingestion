@@ -112,16 +112,17 @@ Cada tabela é declarada com os seguintes campos:
 
 ```yaml
 OINV:
-  tipo: tabela          # tabela | view
-  estrategia: incremental_append   # incremental_append | incremental_upsert | full_reload
-  frequencia: diaria    # diaria | semanal  (omitir = diaria)
+  tipo: tabela                     # tabela | view
+  estrategia: incremental_append   # incremental_append | full_reload | snapshot_diario
+  frequencia: diaria               # diaria | semanal  (omitir = diaria)
   chave_primaria:
     - DocEntry
-  coluna_watermark: UpdateDate
+  coluna_watermark: UpdateDate     # coluna de data no HANA usada no filtro
+  coluna_watermark_local: _ingestao_em  # coluna no raw usada para ler o MAX (opcional)
   carga_inicial:
-    inicio: "2023-01-01"   # null = sem filtro de data
-    fim: "2026-04-22"      # null = sem filtro de data
-    janela_meses: 3        # null = carrega tudo de uma vez
+    inicio: "2023-01-01"           # null = sem filtro de data
+    fim: "2026-04-27"              # null = sem filtro de data
+    janela_meses: 3                # null = carrega tudo de uma vez
   colunas:
     - DocEntry
     - DocDate
@@ -132,9 +133,18 @@ OINV:
 
 | Estratégia | Comportamento | Quando usar |
 |------------|--------------|-------------|
-| `incremental_append` | Busca registros com `watermark > max(raw)` e insere | Tabelas onde registros não mudam retroativamente |
-| `incremental_upsert` | Busca por watermark, deleta por PK e reinsere | Tabelas onde registros podem ser alterados após criação |
-| `full_reload` | TRUNCATE + INSERT completo | Tabelas sem watermark natural ou views de status |
+| `incremental_append` | Busca registros com `coluna_watermark > max(coluna_watermark_local)` e insere | Tabelas transacionais com coluna de data de atualização |
+| `full_reload` | TRUNCATE + INSERT completo | Tabelas de linha (INV1, QUT1, RDR1), cadastros estáticos e tabelas sem watermark confiável |
+| `snapshot_diario` | DELETE do dia atual + INSERT completo — acumula histórico via `_ingestao_em` | Tabelas de estado que mudam diariamente sem coluna de data própria (parcelas, preços, estoque) |
+
+### Watermark duplo (`coluna_watermark` + `coluna_watermark_local`)
+
+Tabelas com `UpdateDate` no SAP têm precisão de dia — sem hora. Isso causaria reprocessamento do dia inteiro a cada run. Para evitar duplicatas:
+
+- `coluna_watermark_local: _ingestao_em` — lê `MAX(_ingestao_em)` no raw (datetime2 completo com hora)
+- `coluna_watermark: UpdateDate` — usa o valor como filtro no HANA (`WHERE UpdateDate >= MAX(_ingestao_em)`)
+
+Quando `coluna_watermark_local` é omitido, usa a própria `coluna_watermark` para ambos (ex: JDT1 e BTF1 que usam `RefDate` já em datetime2).
 
 ### Frequência
 
@@ -143,7 +153,7 @@ OINV:
 | `diaria` (padrão) | Incluída na execução diária |
 | `semanal` | Ignorada na execução diária — roda apenas na DAG semanal |
 
-Tabelas com `frequencia: semanal`: **ITM1**, **OITW** — tabelas de preço e estoque com alto volume e baixa frequência de atualização.
+Tabelas com `frequencia: semanal`: **ITM1**, **OITW** — preço e estoque por depósito, alto volume, baixa frequência de atualização.
 
 ---
 
@@ -214,7 +224,7 @@ A extração usa `stream_results=True` com `fetchmany(10000)` — os dados nunca
 
 ### Coluna de auditoria
 
-Todas as tabelas no raw recebem a coluna `_ingestao_em DATETIME2 DEFAULT GETDATE()`, preenchida automaticamente no momento da inserção.
+Todas as tabelas no raw recebem a coluna `_ingestao_em DATETIME2 DEFAULT GETDATE()`, preenchida automaticamente no momento da inserção. Essa coluna serve também como watermark para tabelas com `snapshot_diario`.
 
 ---
 
@@ -253,34 +263,43 @@ ORDER BY inicio_em DESC
 
 ## Tabelas Configuradas
 
-| Tabela | Tipo | Estratégia | Frequência | Watermark |
-|--------|------|-----------|------------|-----------|
-| OINV | tabela | incremental_append | diaria | UpdateDate |
-| OPCH | tabela | incremental_append | diaria | UpdateDate |
-| OCRD | tabela | incremental_append | diaria | UpdateDate |
-| OITM | tabela | incremental_append | diaria | UpdateDate |
-| JDT1 | tabela | incremental_append | diaria | RefDate |
-| INV6 | tabela | full_reload | diaria | — |
-| PCH6 | tabela | full_reload | diaria | — |
-| BTF1 | tabela | incremental_append | diaria | RefDate |
-| ITM1 | tabela | full_reload | **semanal** | — |
-| OITW | tabela | full_reload | **semanal** | — |
-| OACT | tabela | full_reload | diaria | — |
-| OCRG | tabela | full_reload | diaria | — |
-| OBPL | tabela | full_reload | diaria | — |
-| OWHS | tabela | full_reload | diaria | — |
-| NFN1 | tabela | full_reload | diaria | — |
-| OSLP | tabela | full_reload | diaria | — |
-| OBTF | tabela | full_reload | diaria | — |
-| @ITEM_FAMILIA | tabela | full_reload | diaria | — |
-| @ITEM_SUB_CLASSE | tabela | full_reload | diaria | — |
-| @ITEM_CLASSE | tabela | full_reload | diaria | — |
-| @LOJAS | tabela | full_reload | diaria | — |
-| VW_PBI_RANKING_VENDAS_V3 | view | incremental_append | diaria | DATA |
-| VW_FAROL_MAPA_RELACAO | view | full_reload | diaria | — |
+| Tabela | Tipo | Estratégia | Frequência | Watermark HANA | Watermark Local |
+|--------|------|-----------|------------|----------------|-----------------|
+| OINV | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| OQUT | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| ORIN | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| ORDR | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| OPCH | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| OITM | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| OCRD | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| JDT1 | tabela | incremental_append | diaria | RefDate | RefDate |
+| BTF1 | tabela | incremental_append | diaria | RefDate | RefDate |
+| INV1 | tabela | full_reload | diaria | — | — |
+| QUT1 | tabela | full_reload | diaria | — | — |
+| RDR1 | tabela | full_reload | diaria | — | — |
+| INV3 | tabela | full_reload | diaria | — | — |
+| INV12 | tabela | full_reload | diaria | — | — |
+| QUT12 | tabela | full_reload | diaria | — | — |
+| RIN1 | tabela | full_reload | diaria | — | — |
+| RIN12 | tabela | full_reload | diaria | — | — |
+| INV6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
+| PCH6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
+| ITM1 | tabela | snapshot_diario | **semanal** | — | _ingestao_em |
+| OITW | tabela | snapshot_diario | **semanal** | — | _ingestao_em |
+| OACT | tabela | full_reload | diaria | — | — |
+| OCRG | tabela | full_reload | diaria | — | — |
+| OBPL | tabela | full_reload | diaria | — | — |
+| OWHS | tabela | full_reload | diaria | — | — |
+| NFN1 | tabela | full_reload | diaria | — | — |
+| OSLP | tabela | full_reload | diaria | — | — |
+| OBTF | tabela | full_reload | diaria | — | — |
+| @ITEM_FAMILIA | tabela | full_reload | diaria | — | — |
+| @ITEM_SUB_CLASSE | tabela | full_reload | diaria | — | — |
+| @ITEM_CLASSE | tabela | full_reload | diaria | — | — |
+| @LOJAS | tabela | full_reload | diaria | — | — |
 
-> **VW_FAROL_MAPA_RELACAO**: view de status de documentos (orçamento → pedido → nota). Requer full_reload pois o status de qualquer documento pode mudar a qualquer momento.
+> **Tabelas de linha (INV1, QUT1, RDR1, INV3, INV12, QUT12, RIN1, RIN12):** full_reload diário. O histórico de mudanças dos documentos é capturado pelo cabeçalho correspondente (OINV, OQUT, ORIN, ORDR) via incremental_append.
 >
-> **ITM1** e **OITW**: tabelas de preço e estoque por armazém. Sem coluna de data para incremental — full_reload semanal fora do horário comercial.
+> **Tabelas snapshot (INV6, PCH6, ITM1, OITW):** acumulam histórico diário via `_ingestao_em`. A cada execução, os registros do dia atual são deletados e reinseridos (idempotente). Nunca truncar essas tabelas — o histórico acumulado não existe no SAP HANA.
 >
-> **INV6** e **PCH6**: tabelas de parcelas de recebimento/pagamento. Não possuem coluna de data de criação ou atualização — `DueDate` é a data de vencimento, não confiável como watermark. `Status` e `Paid` mudam ao longo do tempo (quitação, renegociação). Full_reload diário garante consistência.
+> **ITM1 e OITW:** frequência semanal devido ao alto volume. Rodar fora do horário comercial.

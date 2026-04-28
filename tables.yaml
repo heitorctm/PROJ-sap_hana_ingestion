@@ -593,44 +593,6 @@ OSLP:
     - Code
     - Name
 
-BTF1:
-  tipo: tabela
-  estrategia: incremental_append
-  chave_primaria:
-    - BatchNum
-    - TransId
-    - Line_ID
-  coluna_watermark: RefDate
-  carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
-  colunas:
-    - BatchNum
-    - TransId
-    - Line_ID
-    - BPLName
-    - Credit
-    - DueDate
-    - RefDate
-    - ShortName
-
-OBTF:
-  tipo: tabela
-  estrategia: full_reload
-  chave_primaria:
-    - BatchNum
-    - TransId
-  coluna_watermark: null
-  carga_inicial:
-    inicio: null
-    fim: null
-    janela_meses: null
-  colunas:
-    - BatchNum
-    - TransId
-    - BtfStatus
-    - Memo
 
 PCH6:
   tipo: tabela

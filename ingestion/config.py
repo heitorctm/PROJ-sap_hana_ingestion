@@ -34,6 +34,7 @@ def carregar_tabelas() -> dict[str, dict]:
             "estrategia": cfg.get("estrategia", "full_reload"),
             "chave_primaria": cfg.get("chave_primaria") or [],
             "coluna_watermark": cfg.get("coluna_watermark"),
+            "coluna_watermark_local": cfg.get("coluna_watermark_local", cfg.get("coluna_watermark")),
             "tabela_cabecalho": cfg.get("tabela_cabecalho"),
             "coluna_watermark_cabecalho": cfg.get("coluna_watermark_cabecalho"),
             "colunas": cfg.get("colunas") or [],

@@ -72,13 +72,14 @@ def executar_append(
     colunas: list[str],
     tipo: str,
     coluna_watermark: str,
+    coluna_watermark_local: str,
 ) -> tuple[int, float]:
     inicio = time.perf_counter()
     metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 
-    watermark = get_watermark_incremental(sql_conn, tabela, coluna_watermark)
+    watermark = get_watermark_incremental(sql_conn, tabela, coluna_watermark_local)
     filtro = f"{nome_hana(coluna_watermark)} >= '{watermark}'" if watermark else None
     sql_select = montar_select_hana(tabela, metadados, filtro)
     sql_insert = montar_insert_sqlserver(tabela, metadados)

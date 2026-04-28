@@ -27,6 +27,7 @@ OINV:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"
@@ -99,6 +100,7 @@ OQUT:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"
@@ -161,6 +163,7 @@ ORIN:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"
@@ -225,6 +228,7 @@ ORDR:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"
@@ -404,6 +408,7 @@ OITM:
   chave_primaria:
     - ItemCode
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"
@@ -479,6 +484,7 @@ OCRD:
   chave_primaria:
     - CardCode
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"
@@ -651,6 +657,7 @@ OPCH:
   chave_primaria:
     - DocEntry
   coluna_watermark: UpdateDate
+  coluna_watermark_local: _ingestao_em
   carga_inicial:
     inicio: "2023-01-01"
     fim: "2026-04-27"

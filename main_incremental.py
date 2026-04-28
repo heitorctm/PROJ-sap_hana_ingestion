@@ -86,7 +86,8 @@ def main() -> None:
                     case "incremental_append":
                         linhas, segundos = executar_append(
                             hana_engine, sql_conn, tabela,
-                            cfg["colunas"], cfg["tipo"], cfg["coluna_watermark"],
+                            cfg["colunas"], cfg["tipo"],
+                            cfg["coluna_watermark"], cfg["coluna_watermark_local"],
                         )
                     case "incremental_via_cabecalho":
                         linhas, segundos = executar_via_cabecalho(

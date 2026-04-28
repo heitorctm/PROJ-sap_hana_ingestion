@@ -43,20 +43,6 @@ def _ddl_colunas(metadados: list[dict[str, Any]]) -> str:
     return ",\n".join(colunas_sql)
 
 
-def recriar_tabela_raw(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
-    ddl = f"""
-    IF OBJECT_ID('{RAW_SCHEMA}.{tabela}', 'U') IS NOT NULL
-        DROP TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)};
-
-    CREATE TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} (
-{_ddl_colunas(metadados)}
-    );
-    """
-    cursor = sql_conn.cursor()
-    cursor.execute(ddl)
-    sql_conn.commit()
-
-
 def criar_tabela_se_nao_existir(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
     colunas_ddl = _ddl_colunas(metadados)
     ddl = f"""

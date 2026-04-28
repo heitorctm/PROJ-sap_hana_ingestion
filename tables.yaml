@@ -3,7 +3,7 @@
 #
 # NOME_TABELA:
 #   tipo: tabela | view
-#   estrategia: incremental_append | incremental_append | full_reload
+#   estrategia: incremental_append | incremental_upsert | incremental_via_cabecalho | full_reload | snapshot_diario
 #   chave_primaria:
 #     - COLUNA_PK
 #   coluna_watermark: COLUNA_DATA

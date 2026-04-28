@@ -86,12 +86,14 @@ def main() -> None:
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"],
                             cfg["chave_primaria"], cfg["coluna_watermark"],
+                            metadados=metadados,
                         )
                     case "incremental_append":
                         linhas, segundos = executar_append(
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"],
                             cfg["coluna_watermark"], cfg["coluna_watermark_local"],
+                            metadados=metadados,
                         )
                     case "incremental_via_cabecalho":
                         linhas, segundos = executar_via_cabecalho(
@@ -100,16 +102,19 @@ def main() -> None:
                             cfg["chave_primaria"],
                             cfg["tabela_cabecalho"],
                             cfg["coluna_watermark_cabecalho"],
+                            metadados=metadados,
                         )
                     case "snapshot_diario":
                         linhas, segundos = executar_snapshot_diario(
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"],
+                            metadados=metadados,
                         )
                     case _:
                         linhas, segundos = executar_full_reload(
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"],
+                            metadados=metadados,
                         )
 
                 registrar_sucesso(sql_conn, execucao_id, tabela, linhas)

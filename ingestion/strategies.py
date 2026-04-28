@@ -14,11 +14,10 @@ from ingestion.loader import (
     nome_hana,
     nome_sqlserver,
     normalizar_valor,
-    recriar_tabela_raw,
     truncar_tabela,
 )
 from ingestion.metadata import buscar_metadados_tabela
-from ingestion.watermark import get_max_watermark, get_watermark_incremental
+from ingestion.watermark import get_watermark_incremental
 
 
 def executar_upsert(
@@ -29,9 +28,11 @@ def executar_upsert(
     tipo: str,
     chave_primaria: list[str],
     coluna_watermark: str,
+    metadados: list[dict] | None = None,
 ) -> tuple[int, float]:
     inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
+    if metadados is None:
+        metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 
@@ -73,9 +74,11 @@ def executar_append(
     tipo: str,
     coluna_watermark: str,
     coluna_watermark_local: str,
+    metadados: list[dict] | None = None,
 ) -> tuple[int, float]:
     inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
+    if metadados is None:
+        metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 
@@ -94,9 +97,11 @@ def executar_full_reload(
     tabela: str,
     colunas: list[str],
     tipo: str,
+    metadados: list[dict] | None = None,
 ) -> tuple[int, float]:
     inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
+    if metadados is None:
+        metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 
@@ -117,6 +122,7 @@ def executar_via_cabecalho(
     chave_primaria: list[str],
     tabela_cabecalho: str,
     coluna_watermark_cabecalho: str,
+    metadados: list[dict] | None = None,
 ) -> tuple[int, float]:
     """Incremental para tabelas de linhas sem UpdateDate.
 
@@ -125,7 +131,8 @@ def executar_via_cabecalho(
     Isso evita subquery no HANA e permite uso de índice em DocEntry.
     """
     inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
+    if metadados is None:
+        metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 
@@ -183,6 +190,7 @@ def executar_snapshot_diario(
     tabela: str,
     colunas: list[str],
     tipo: str,
+    metadados: list[dict] | None = None,
 ) -> tuple[int, float]:
     """Snapshot diário: acumula o estado completo do dia, sem apagar histórico.
 
@@ -190,7 +198,8 @@ def executar_snapshot_diario(
     Usa _ingestao_em (DEFAULT GETDATE()) como marcador temporal — sem coluna extra.
     """
     inicio = time.perf_counter()
-    metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
+    if metadados is None:
+        metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 

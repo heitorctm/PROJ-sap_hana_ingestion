@@ -113,7 +113,7 @@ Cada tabela é declarada com os seguintes campos:
 ```yaml
 OINV:
   tipo: tabela                     # tabela | view
-  estrategia: incremental_append   # incremental_append | full_reload | snapshot_diario
+  estrategia: incremental_append   # incremental_append | incremental_upsert | incremental_via_cabecalho | full_reload | snapshot_diario
   frequencia: diaria               # diaria | semanal  (omitir = diaria)
   chave_primaria:
     - DocEntry
@@ -121,7 +121,7 @@ OINV:
   coluna_watermark_local: _ingestao_em  # coluna no raw usada para ler o MAX (opcional)
   carga_inicial:
     inicio: "2023-01-01"           # null = sem filtro de data
-    fim: "2026-04-27"              # null = sem filtro de data
+    fim: null                      # null = usa data de hoje
     janela_meses: 3                # null = carrega tudo de uma vez
   colunas:
     - DocEntry
@@ -133,9 +133,11 @@ OINV:
 
 | Estratégia | Comportamento | Quando usar |
 |------------|--------------|-------------|
-| `incremental_append` | Busca registros com `coluna_watermark > max(coluna_watermark_local)` e insere | Tabelas transacionais com coluna de data de atualização |
-| `full_reload` | TRUNCATE + INSERT completo | Tabelas de linha (INV1, QUT1, RDR1), cadastros estáticos e tabelas sem watermark confiável |
-| `snapshot_diario` | DELETE do dia atual + INSERT completo — acumula histórico via `_ingestao_em` | Tabelas de estado que mudam diariamente sem coluna de data própria (parcelas, preços, estoque) |
+| `incremental_append` | Busca registros com `coluna_watermark > max(coluna_watermark_local)` e insere | Cabeçalhos transacionais — acumula histórico de versões (OINV, OQUT, ORIN, ORDR, OPCH, JDT1) |
+| `incremental_upsert` | Busca registros com `coluna_watermark > max(coluna_watermark)`, deleta por PK e reinserere | Dados mestre — raw reflete estado atual com PK única (OITM, OCRD) |
+| `incremental_via_cabecalho` | Busca DocEntries do cabeçalho atualizados, deleta+reinserere as linhas afetadas | Tabelas de linha sem UpdateDate próprio (INV1, QUT1, RDR1, RIN1) |
+| `full_reload` | TRUNCATE + INSERT completo | Tabelas de referência pequenas e extensões de documento sem watermark |
+| `snapshot_diario` | DELETE do dia atual + INSERT completo — acumula histórico via `_ingestao_em` | Tabelas de estado sem coluna de data própria (parcelas, preços, estoque por depósito) |
 
 ### Watermark duplo (`coluna_watermark` + `coluna_watermark_local`)
 
@@ -144,7 +146,7 @@ Tabelas com `UpdateDate` no SAP têm precisão de dia — sem hora. Isso causari
 - `coluna_watermark_local: _ingestao_em` — lê `MAX(_ingestao_em)` no raw (datetime2 completo com hora)
 - `coluna_watermark: UpdateDate` — usa o valor como filtro no HANA (`WHERE UpdateDate >= MAX(_ingestao_em)`)
 
-Quando `coluna_watermark_local` é omitido, usa a própria `coluna_watermark` para ambos (ex: JDT1 e BTF1 que usam `RefDate` já em datetime2).
+Quando `coluna_watermark_local` é omitido, usa a própria `coluna_watermark` para ambos (ex: JDT1 que usa `RefDate` já em datetime2).
 
 ### Frequência
 
@@ -152,8 +154,6 @@ Quando `coluna_watermark_local` é omitido, usa a própria `coluna_watermark` pa
 |-------|--------------|
 | `diaria` (padrão) | Incluída na execução diária |
 | `semanal` | Ignorada na execução diária — roda apenas na DAG semanal |
-
-Tabelas com `frequencia: semanal`: **ITM1**, **OITW** — preço e estoque por depósito, alto volume, baixa frequência de atualização.
 
 ---
 
@@ -266,40 +266,39 @@ ORDER BY inicio_em DESC
 | Tabela | Tipo | Estratégia | Frequência | Watermark HANA | Watermark Local |
 |--------|------|-----------|------------|----------------|-----------------|
 | OINV | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| INV1 | tabela | incremental_via_cabecalho | diaria | via OINV.UpdateDate | — |
 | OQUT | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| QUT1 | tabela | incremental_via_cabecalho | diaria | via OQUT.UpdateDate | — |
 | ORIN | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| RIN1 | tabela | incremental_via_cabecalho | diaria | via ORIN.UpdateDate | — |
 | ORDR | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| RDR1 | tabela | incremental_via_cabecalho | diaria | via ORDR.UpdateDate | — |
 | OPCH | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| OITM | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| OCRD | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| OITM | tabela | incremental_upsert | diaria | UpdateDate | UpdateDate |
+| OCRD | tabela | incremental_upsert | diaria | UpdateDate | UpdateDate |
 | JDT1 | tabela | incremental_append | diaria | RefDate | RefDate |
-| BTF1 | tabela | incremental_append | diaria | RefDate | RefDate |
-| INV1 | tabela | full_reload | diaria | — | — |
-| QUT1 | tabela | full_reload | diaria | — | — |
-| RDR1 | tabela | full_reload | diaria | — | — |
 | INV3 | tabela | full_reload | diaria | — | — |
 | INV12 | tabela | full_reload | diaria | — | — |
 | QUT12 | tabela | full_reload | diaria | — | — |
-| RIN1 | tabela | full_reload | diaria | — | — |
 | RIN12 | tabela | full_reload | diaria | — | — |
-| INV6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
-| PCH6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
-| ITM1 | tabela | snapshot_diario | **semanal** | — | _ingestao_em |
-| OITW | tabela | snapshot_diario | **semanal** | — | _ingestao_em |
+| OUSG | tabela | full_reload | diaria | — | — |
 | OACT | tabela | full_reload | diaria | — | — |
 | OCRG | tabela | full_reload | diaria | — | — |
 | OBPL | tabela | full_reload | diaria | — | — |
 | OWHS | tabela | full_reload | diaria | — | — |
 | NFN1 | tabela | full_reload | diaria | — | — |
 | OSLP | tabela | full_reload | diaria | — | — |
-| OBTF | tabela | full_reload | diaria | — | — |
 | @ITEM_FAMILIA | tabela | full_reload | diaria | — | — |
 | @ITEM_SUB_CLASSE | tabela | full_reload | diaria | — | — |
 | @ITEM_CLASSE | tabela | full_reload | diaria | — | — |
 | @LOJAS | tabela | full_reload | diaria | — | — |
+| INV6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
+| PCH6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
+| ITM1 | tabela | snapshot_diario | diaria | — | _ingestao_em |
+| OITW | tabela | snapshot_diario | diaria | — | _ingestao_em |
 
-> **Tabelas de linha (INV1, QUT1, RDR1, INV3, INV12, QUT12, RIN1, RIN12):** full_reload diário. O histórico de mudanças dos documentos é capturado pelo cabeçalho correspondente (OINV, OQUT, ORIN, ORDR) via incremental_append.
+> **Tabelas de linha (INV1, QUT1, RDR1, RIN1):** `incremental_via_cabecalho` — detectam alterações pelo watermark do cabeçalho correspondente, deletam e reinserem apenas as linhas afetadas.
+>
+> **Dados mestre (OITM, OCRD):** `incremental_upsert` — delete por PK + reinsert garante uma única linha por ItemCode/CardCode no raw.
 >
 > **Tabelas snapshot (INV6, PCH6, ITM1, OITW):** acumulam histórico diário via `_ingestao_em`. A cada execução, os registros do dia atual são deletados e reinseridos (idempotente). Nunca truncar essas tabelas — o histórico acumulado não existe no SAP HANA.
->
-> **ITM1 e OITW:** frequência semanal devido ao alto volume. Rodar fora do horário comercial.

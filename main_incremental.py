@@ -10,6 +10,7 @@ from ingestion.connections import criar_conexao_sqlserver, criar_engine_hana, te
 from ingestion.loader import adicionar_colunas_faltantes
 from ingestion.metadata import buscar_metadados_tabela
 from ingestion.strategies import executar_append, executar_full_reload, executar_snapshot_diario, executar_upsert, executar_via_cabecalho
+from ingestion.watermark import get_watermark_composto, get_watermark_incremental
 
 
 def main() -> None:
@@ -67,6 +68,22 @@ def main() -> None:
     filtro_label = args.frequencia or "todas"
     print(f"\nIniciando carga incremental [{filtro_label}] — {total} tabelas...\n")
 
+    # captura watermarks dos cabeçalhos antes de qualquer inserção
+    watermarks_cabecalho: dict[str, tuple] = {}
+    for tabela, cfg in tabelas_filtradas.items():
+        if cfg["estrategia"] == "incremental_via_cabecalho":
+            cab = cfg["tabela_cabecalho"]
+            if cab not in watermarks_cabecalho:
+                if cfg["coluna_watermark_cabecalho_ts"]:
+                    watermarks_cabecalho[cab] = get_watermark_composto(
+                        sql_conn, cab,
+                        cfg["coluna_watermark_cabecalho"],
+                        cfg["coluna_watermark_cabecalho_ts"],
+                    )
+                else:
+                    wm = get_watermark_incremental(sql_conn, cab, cfg["coluna_watermark_cabecalho"])
+                    watermarks_cabecalho[cab] = (wm,) if wm else None
+
     inicio_total = time.perf_counter()
 
     try:
@@ -86,6 +103,7 @@ def main() -> None:
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"],
                             cfg["chave_primaria"], cfg["coluna_watermark"],
+                            coluna_watermark_ts=cfg["coluna_watermark_ts"],
                             metadados=metadados,
                         )
                     case "incremental_append":
@@ -93,6 +111,8 @@ def main() -> None:
                             hana_engine, sql_conn, tabela,
                             cfg["colunas"], cfg["tipo"],
                             cfg["coluna_watermark"], cfg["coluna_watermark_local"],
+                            coluna_watermark_ts=cfg["coluna_watermark_ts"],
+                            idempotente=cfg["append_idempotente"],
                             metadados=metadados,
                         )
                     case "incremental_via_cabecalho":
@@ -102,6 +122,8 @@ def main() -> None:
                             cfg["chave_primaria"],
                             cfg["tabela_cabecalho"],
                             cfg["coluna_watermark_cabecalho"],
+                            coluna_watermark_cabecalho_ts=cfg["coluna_watermark_cabecalho_ts"],
+                            watermark_cabecalho=watermarks_cabecalho.get(cfg["tabela_cabecalho"]),
                             metadados=metadados,
                         )
                     case "snapshot_diario":

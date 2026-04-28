@@ -112,17 +112,19 @@ Cada tabela é declarada com os seguintes campos:
 
 ```yaml
 OINV:
-  tipo: tabela                     # tabela | view
-  estrategia: incremental_append   # incremental_append | incremental_upsert | incremental_via_cabecalho | full_reload | snapshot_diario
-  frequencia: diaria               # diaria | semanal  (omitir = diaria)
+  tipo: tabela                          # tabela | view
+  estrategia: incremental_append        # incremental_append | incremental_upsert | incremental_via_cabecalho | full_reload | snapshot_diario
+  frequencia: diaria                    # diaria | semanal  (omitir = diaria)
   chave_primaria:
     - DocEntry
-  coluna_watermark: UpdateDate     # coluna de data no HANA usada no filtro
-  coluna_watermark_local: _ingestao_em  # coluna no raw usada para ler o MAX (opcional)
+  coluna_watermark: UpdateDate          # coluna de data no HANA usada no filtro
+  coluna_watermark_ts: UpdateTS         # coluna de hora no HANA (HHMMSS como inteiro) — habilita watermark com precisão de segundo
+  coluna_watermark_local: _ingestao_em  # coluna no raw usada como fallback quando coluna_watermark_ts não está definido
+  append_idempotente: false             # true = deleta registros do dia-limite antes de inserir (para tabelas sem UpdateTS)
   carga_inicial:
-    inicio: "2023-01-01"           # null = sem filtro de data
-    fim: null                      # null = usa data de hoje
-    janela_meses: 3                # null = carrega tudo de uma vez
+    inicio: "2023-01-01"                # null = sem filtro de data
+    fim: null                           # null = usa data de hoje
+    janela_meses: 3                     # null = carrega tudo de uma vez
   colunas:
     - DocEntry
     - DocDate
@@ -133,20 +135,33 @@ OINV:
 
 | Estratégia | Comportamento | Quando usar |
 |------------|--------------|-------------|
-| `incremental_append` | Busca registros com `coluna_watermark > max(coluna_watermark_local)` e insere | Cabeçalhos transacionais — acumula histórico de versões (OINV, OQUT, ORIN, ORDR, OPCH, JDT1) |
+| `incremental_append` | Busca e insere registros novos desde o último watermark. Com `coluna_watermark_ts`: precisão de segundo via UpdateDate+UpdateTS. Com `append_idempotente`: deleta o dia-limite antes de inserir | Cabeçalhos transacionais — acumula histórico de versões (OINV, OQUT, ORIN, ORDR, OPCH, JDT1, OJDT) |
 | `incremental_upsert` | Busca registros com `coluna_watermark > max(coluna_watermark)`, deleta por PK e reinserere | Dados mestre — raw reflete estado atual com PK única (OITM, OCRD) |
 | `incremental_via_cabecalho` | Busca DocEntries do cabeçalho atualizados, deleta+reinserere as linhas afetadas | Tabelas de linha sem UpdateDate próprio (INV1, QUT1, RDR1, RIN1) |
 | `full_reload` | TRUNCATE + INSERT completo | Tabelas de referência pequenas e extensões de documento sem watermark |
 | `snapshot_diario` | DELETE do dia atual + INSERT completo — acumula histórico via `_ingestao_em` | Tabelas de estado sem coluna de data própria (parcelas, preços, estoque por depósito) |
 
-### Watermark duplo (`coluna_watermark` + `coluna_watermark_local`)
+### Precisão do watermark incremental
 
-Tabelas com `UpdateDate` no SAP têm precisão de dia — sem hora. Isso causaria reprocessamento do dia inteiro a cada run. Para evitar duplicatas:
+`UpdateDate` no SAP tem precisão de dia — sem hora. Rodar o script duas vezes no mesmo dia sem proteção causaria duplicatas. O pipeline resolve isso de três formas dependendo da tabela:
 
-- `coluna_watermark_local: _ingestao_em` — lê `MAX(_ingestao_em)` no raw (datetime2 completo com hora)
-- `coluna_watermark: UpdateDate` — usa o valor como filtro no HANA (`WHERE UpdateDate >= MAX(_ingestao_em)`)
+**Watermark composto (`coluna_watermark_ts: UpdateTS`)** — OINV, OQUT, ORIN, ORDR, OPCH, OITM, OCRD
 
-Quando `coluna_watermark_local` é omitido, usa a própria `coluna_watermark` para ambos (ex: JDT1 que usa `RefDate` já em datetime2).
+Essas tabelas têm `UpdateTS` (hora da última atualização no formato HHMMSS como inteiro). O pipeline lê `TOP 1 UpdateDate DESC, UpdateTS DESC` do raw e monta o filtro no HANA com precisão de segundo:
+
+```sql
+WHERE UpdateDate > '{data}' OR (UpdateDate = '{data}' AND UpdateTS > {ts})
+```
+
+Cada run captura apenas registros genuinamente mais novos que o último inserido — sem duplicatas independente de quantas vezes rodar no dia.
+
+**Watermark composto nas tabelas de linha (`coluna_watermark_cabecalho_ts: UpdateTS`)** — INV1, QUT1, RIN1, RDR1
+
+O pipeline captura o watermark do cabeçalho correspondente **antes de iniciar qualquer inserção**. Assim, quando OINV é processado e insere novas notas, INV1 usa o watermark pré-capturado (do estado anterior à run) para buscar no HANA os DocEntries afetados — garantindo que as linhas do cabeçalho atual sejam pegas na mesma run, e não na seguinte.
+
+**Append idempotente (`append_idempotente: true`)** — JDT1, OJDT
+
+Essas tabelas têm só `RefDate` (DATE, sem componente de hora). Antes de inserir, o pipeline deleta do raw todos os registros com `RefDate = MAX(RefDate)` e os reinserere. O dia-limite é sempre recarregado integralmente — idempotente por data.
 
 ### Frequência
 
@@ -265,17 +280,17 @@ ORDER BY inicio_em DESC
 
 | Tabela | Tipo | Estratégia | Frequência | Watermark HANA | Watermark Local |
 |--------|------|-----------|------------|----------------|-----------------|
-| OINV | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| INV1 | tabela | incremental_via_cabecalho | diaria | via OINV.UpdateDate | — |
-| OQUT | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| QUT1 | tabela | incremental_via_cabecalho | diaria | via OQUT.UpdateDate | — |
-| ORIN | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| RIN1 | tabela | incremental_via_cabecalho | diaria | via ORIN.UpdateDate | — |
-| ORDR | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| RDR1 | tabela | incremental_via_cabecalho | diaria | via ORDR.UpdateDate | — |
-| OPCH | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
-| OITM | tabela | incremental_upsert | diaria | UpdateDate | UpdateDate |
-| OCRD | tabela | incremental_upsert | diaria | UpdateDate | UpdateDate |
+| OINV | tabela | incremental_append | diaria | UpdateDate+UpdateTS | _ingestao_em |
+| INV1 | tabela | incremental_via_cabecalho | diaria | via OINV.UpdateDate+UpdateTS | — |
+| OQUT | tabela | incremental_append | diaria | UpdateDate+UpdateTS | _ingestao_em |
+| QUT1 | tabela | incremental_via_cabecalho | diaria | via OQUT.UpdateDate+UpdateTS | — |
+| ORIN | tabela | incremental_append | diaria | UpdateDate+UpdateTS | _ingestao_em |
+| RIN1 | tabela | incremental_via_cabecalho | diaria | via ORIN.UpdateDate+UpdateTS | — |
+| ORDR | tabela | incremental_append | diaria | UpdateDate+UpdateTS | _ingestao_em |
+| RDR1 | tabela | incremental_via_cabecalho | diaria | via ORDR.UpdateDate+UpdateTS | — |
+| OPCH | tabela | incremental_append | diaria | UpdateDate+UpdateTS | _ingestao_em |
+| OITM | tabela | incremental_upsert | diaria | UpdateDate+UpdateTS | UpdateDate+UpdateTS |
+| OCRD | tabela | incremental_upsert | diaria | UpdateDate+UpdateTS | UpdateDate+UpdateTS |
 | OJDT | tabela | incremental_append | diaria | RefDate | RefDate |
 | JDT1 | tabela | incremental_append | diaria | RefDate | RefDate |
 | INV3 | tabela | full_reload | diaria | — | — |

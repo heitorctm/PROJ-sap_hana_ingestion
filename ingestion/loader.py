@@ -92,11 +92,13 @@ def deletar_por_chave(
     cursor = sql_conn.cursor()
     if len(chaves) == 1:
         col = nome_sqlserver(chaves[0])
-        placeholders = ", ".join("?" for _ in valores)
-        cursor.execute(
-            f"DELETE FROM {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} WHERE {col} IN ({placeholders})",
-            [v[0] for v in valores],
-        )
+        for i in range(0, len(valores), 2000):
+            lote = valores[i:i + 2000]
+            placeholders = ", ".join("?" for _ in lote)
+            cursor.execute(
+                f"DELETE FROM {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} WHERE {col} IN ({placeholders})",
+                [v[0] for v in lote],
+            )
     else:
         for valor in valores:
             condicoes = " AND ".join(f"{nome_sqlserver(c)} = ?" for c in chaves)

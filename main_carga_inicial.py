@@ -75,7 +75,7 @@ def main() -> None:
                 if not metadados:
                     raise ValueError(f"Sem metadados no HANA para {tabela}")
 
-                criar_tabela_se_nao_existir(sql_conn, tabela, metadados, snapshot=(estrategia == "snapshot_diario"))
+                criar_tabela_se_nao_existir(sql_conn, tabela, metadados)
                 registrar_inicio(sql_conn, execucao_id, tabela, estrategia, frequencia)
                 inicio_tabela = time.perf_counter()
 

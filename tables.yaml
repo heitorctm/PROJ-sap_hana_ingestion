@@ -66,17 +66,15 @@ OINV:
 
 INV1:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
-  tabela_cabecalho: OINV
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -130,17 +128,15 @@ OQUT:
 
 QUT1:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
-  tabela_cabecalho: OQUT
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -196,17 +192,15 @@ ORIN:
 
 RIN1:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
-  tabela_cabecalho: ORIN
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -253,17 +247,15 @@ ORDR:
 
 RDR1:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
-  tabela_cabecalho: ORDR
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - LineNum
@@ -277,17 +269,15 @@ RDR1:
 
 INV3:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
     - ExpnsCode
   coluna_watermark: null
-  tabela_cabecalho: OINV
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - ExpnsCode
@@ -295,48 +285,42 @@ INV3:
 
 INV12:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
   coluna_watermark: null
-  tabela_cabecalho: OINV
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - MainUsage
 
 QUT12:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
   coluna_watermark: null
-  tabela_cabecalho: OQUT
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - MainUsage
 
 RIN12:
   tipo: tabela
-  estrategia: incremental_via_cabecalho
+  estrategia: full_reload
   chave_primaria:
     - DocEntry
   coluna_watermark: null
-  tabela_cabecalho: ORIN
-  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: "2023-01-01"
-    fim: "2026-04-27"
-    janela_meses: 3
+    inicio: null
+    fim: null
+    janela_meses: null
   colunas:
     - DocEntry
     - MainUsage

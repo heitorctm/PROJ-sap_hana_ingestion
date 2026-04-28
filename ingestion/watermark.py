@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 
 import pyodbc
 
@@ -18,13 +18,12 @@ def get_max_watermark(sql_conn: pyodbc.Connection, tabela: str, coluna: str):
 
 
 def get_watermark_incremental(sql_conn: pyodbc.Connection, tabela: str, coluna: str) -> date | None:
-    """Retorna MAX(coluna) - 1 dia para garantir reprocessamento do dia atual."""
     valor = get_max_watermark(sql_conn, tabela, coluna)
     if valor is None:
         return None
     if isinstance(valor, date):
-        return valor - timedelta(days=1)
+        return valor
     try:
-        return date.fromisoformat(str(valor)[:10]) - timedelta(days=1)
+        return date.fromisoformat(str(valor)[:10])
     except ValueError:
         return None

@@ -119,8 +119,9 @@ def executar_via_cabecalho(
 ) -> tuple[int, float]:
     """Incremental para tabelas de linhas sem UpdateDate.
 
-    Filtra pelo DocEntry do cabeçalho onde UpdateDate >= watermark,
-    garantindo que cancelamentos e alterações sejam capturados.
+    Passo 1: busca DocEntries do cabeçalho no HANA (filtrado pelo watermark).
+    Passo 2: busca as linhas no HANA usando a lista de DocEntries como filtro literal.
+    Isso evita subquery no HANA e permite uso de índice em DocEntry.
     """
     inicio = time.perf_counter()
     metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
@@ -130,12 +131,20 @@ def executar_via_cabecalho(
     watermark = get_watermark_incremental(sql_conn, tabela_cabecalho, coluna_watermark_cabecalho)
 
     if watermark:
-        filtro = (
-            f"{nome_hana('DocEntry')} IN ("
-            f"SELECT {nome_hana('DocEntry')} FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela_cabecalho)} "
+        sql_cabecalho = (
+            f"SELECT DISTINCT {nome_hana('DocEntry')} "
+            f"FROM {nome_hana(HANA_SCHEMA)}.{nome_hana(tabela_cabecalho)} "
             f"WHERE {nome_hana(coluna_watermark_cabecalho)} >= '{watermark}'"
-            f")"
         )
+        with hana_engine.connect() as conn:
+            rows = conn.execute(text(sql_cabecalho)).fetchall()
+        doc_entries = [row[0] for row in rows]
+
+        if not doc_entries:
+            return 0, time.perf_counter() - inicio
+
+        placeholders = ", ".join(str(d) for d in doc_entries)
+        filtro = f"{nome_hana('DocEntry')} IN ({placeholders})"
     else:
         filtro = None
 
@@ -177,43 +186,23 @@ def executar_snapshot_diario(
     """Snapshot diário: acumula o estado completo do dia, sem apagar histórico.
 
     Se já rodou hoje, apaga o snapshot do dia antes de reinserir (idempotente).
+    Usa _ingestao_em (DEFAULT GETDATE()) como marcador temporal — sem coluna extra.
     """
     inicio = time.perf_counter()
     metadados = buscar_metadados_tabela(hana_engine, tabela, colunas, tipo)
     if not metadados:
         raise ValueError(f"Sem metadados no HANA: {HANA_SCHEMA}.{tabela}")
 
-    hoje = date.today().isoformat()
-
     cursor = sql_conn.cursor()
     cursor.execute(
         f"DELETE FROM {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} "
-        f"WHERE [_data_snapshot] = ?",
-        hoje,
+        f"WHERE CAST([_ingestao_em] AS DATE) = CAST(GETDATE() AS DATE)",
     )
     sql_conn.commit()
 
     sql_select = montar_select_hana(tabela, metadados)
-    colunas_insert = ", ".join(
-        [f"[{col['COLUMN_NAME']}]" for col in metadados] + ["[_data_snapshot]"]
-    )
-    placeholders = ", ".join(["?" for _ in metadados] + ["?"])
-    sql_insert = f"INSERT INTO {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} ({colunas_insert}) VALUES ({placeholders})"
-
-    total_linhas = 0
-    cursor_destino = sql_conn.cursor()
-    cursor_destino.fast_executemany = True
-
-    with hana_engine.connect() as conn:
-        result = conn.execution_options(stream_results=True).execute(text(sql_select))
-        while True:
-            rows = result.fetchmany(CHUNK_SIZE)
-            if not rows:
-                break
-            lote = [tuple(normalizar_valor(v) for v in row) + (hoje,) for row in rows]
-            cursor_destino.executemany(sql_insert, lote)
-            sql_conn.commit()
-            total_linhas += len(lote)
+    sql_insert = montar_insert_sqlserver(tabela, metadados)
+    total_linhas = executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
 
     return total_linhas, time.perf_counter() - inicio
 

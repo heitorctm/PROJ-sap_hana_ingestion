@@ -57,10 +57,8 @@ def recriar_tabela_raw(sql_conn: pyodbc.Connection, tabela: str, metadados: list
     sql_conn.commit()
 
 
-def criar_tabela_se_nao_existir(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]], snapshot: bool = False) -> None:
+def criar_tabela_se_nao_existir(sql_conn: pyodbc.Connection, tabela: str, metadados: list[dict[str, Any]]) -> None:
     colunas_ddl = _ddl_colunas(metadados)
-    if snapshot:
-        colunas_ddl += ",\n    [_data_snapshot] DATE NOT NULL DEFAULT CAST(GETDATE() AS DATE)"
     ddl = f"""
     IF OBJECT_ID('{RAW_SCHEMA}.{tabela}', 'U') IS NULL
         CREATE TABLE {nome_sqlserver(RAW_SCHEMA)}.{nome_sqlserver(tabela)} (

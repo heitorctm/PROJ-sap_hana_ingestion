@@ -64,18 +64,22 @@ OINV:
     - DpmAmnt
     - SeqCode
     - U_APARECER_BI
+    - TransId
+    - VatSum
 
 INV1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: OINV
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
+    inicio: "2023-01-01"
     fim: null
-    janela_meses: null
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -93,6 +97,9 @@ INV1:
     - CFOPCode
     - U_PRECO_BDI
     - U_PRECO_CUSTO
+    - WhsCode
+    - BaseEntry
+    - BaseType
 
 OQUT:
   tipo: tabela
@@ -127,18 +134,21 @@ OQUT:
     - CreateDate
     - UpdateDate
     - UpdateTS
+    - VatSum
 
 QUT1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: OQUT
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
+    inicio: "2023-01-01"
     fim: null
-    janela_meses: null
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -156,6 +166,9 @@ QUT1:
     - CFOPCode
     - U_PRECO_BDI
     - U_PRECO_CUSTO
+    - WhsCode
+    - BaseEntry
+    - BaseType
 
 ORIN:
   tipo: tabela
@@ -192,18 +205,21 @@ ORIN:
     - CreateDate
     - UpdateDate
     - UpdateTS
+    - VatSum
 
 RIN1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: ORIN
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
+    inicio: "2023-01-01"
     fim: null
-    janela_meses: null
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -221,6 +237,9 @@ RIN1:
     - CFOPCode
     - U_PRECO_BDI
     - U_PRECO_CUSTO
+    - WhsCode
+    - BaseEntry
+    - BaseType
 
 ORDR:
   tipo: tabela
@@ -248,18 +267,22 @@ ORDR:
     - CreateDate
     - UpdateDate
     - UpdateTS
+    - VatSum
+    - GrosProfit
 
 RDR1:
   tipo: tabela
-  estrategia: full_reload
+  estrategia: incremental_via_cabecalho
   chave_primaria:
     - DocEntry
     - LineNum
   coluna_watermark: null
+  tabela_cabecalho: ORDR
+  coluna_watermark_cabecalho: UpdateDate
   carga_inicial:
-    inicio: null
+    inicio: "2023-01-01"
     fim: null
-    janela_meses: null
+    janela_meses: 3
   colunas:
     - DocEntry
     - LineNum
@@ -269,6 +292,9 @@ RDR1:
     - ItemCode
     - Dscription
     - Quantity
+    - Price
+    - LineTotal
+    - WhsCode
     - LineStatus
 
 INV3:
@@ -388,7 +414,7 @@ OUSG:
 ITM1:
   tipo: tabela
   estrategia: snapshot_diario
-  frequencia: semanal
+  frequencia: diaria
   chave_primaria:
     - ItemCode
     - PriceList
@@ -404,15 +430,14 @@ ITM1:
 
 OITM:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: incremental_upsert
   chave_primaria:
     - ItemCode
   coluna_watermark: UpdateDate
-  coluna_watermark_local: _ingestao_em
   carga_inicial:
-    inicio: "2023-01-01"
+    inicio: null
     fim: null
-    janela_meses: 3
+    janela_meses: null
   colunas:
     - ItemCode
     - UpdateDate
@@ -420,6 +445,8 @@ OITM:
     - FirmCode
     - InvntryUom
     - InvntItem
+    - SellItem
+    - PrchseItem
     - ItemName
     - OnHand
     - ItmsGrpCod
@@ -431,7 +458,7 @@ OITM:
 OITW:
   tipo: tabela
   estrategia: snapshot_diario
-  frequencia: semanal
+  frequencia: diaria
   chave_primaria:
     - ItemCode
     - WhsCode
@@ -477,18 +504,18 @@ JDT1:
     - Credit
     - Debit
     - RefDate
+    - ShortName
 
 OCRD:
   tipo: tabela
-  estrategia: incremental_append
+  estrategia: incremental_upsert
   chave_primaria:
     - CardCode
   coluna_watermark: UpdateDate
-  coluna_watermark_local: _ingestao_em
   carga_inicial:
-    inicio: "2023-01-01"
+    inicio: null
     fim: null
-    janela_meses: 3
+    janela_meses: null
   colunas:
     - CardCode
     - UpdateDate
@@ -498,6 +525,8 @@ OCRD:
     - CardType
     - Balance
     - Password
+    - LicTradNum
+    - SlpCode
     - U_PARCEIRO_APARECER_BI
     - U_PREVENDA
     - U_nomeFranquia
@@ -626,10 +655,13 @@ OPCH:
     janela_meses: 3
   colunas:
     - DocEntry
+    - DocNum
     - DocDate
     - DocDueDate
     - DocStatus
     - DocTotal
+    - VatSum
+    - GrosProfit
     - UpdateDate
     - UpdateTS
     - BPLId

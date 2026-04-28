@@ -276,6 +276,7 @@ ORDER BY inicio_em DESC
 | OPCH | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
 | OITM | tabela | incremental_upsert | diaria | UpdateDate | UpdateDate |
 | OCRD | tabela | incremental_upsert | diaria | UpdateDate | UpdateDate |
+| OJDT | tabela | incremental_append | diaria | RefDate | RefDate |
 | JDT1 | tabela | incremental_append | diaria | RefDate | RefDate |
 | INV3 | tabela | full_reload | diaria | — | — |
 | INV12 | tabela | full_reload | diaria | — | — |

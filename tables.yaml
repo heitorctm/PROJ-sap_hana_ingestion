@@ -506,6 +506,24 @@ JDT1:
     - RefDate
     - ShortName
 
+OJDT:
+  tipo: tabela
+  estrategia: incremental_append
+  chave_primaria:
+    - TransId
+  coluna_watermark: RefDate
+  carga_inicial:
+    inicio: "2023-01-01"
+    fim: null
+    janela_meses: 3
+  colunas:
+    - TransId
+    - RefDate
+    - TransType
+    - Memo
+    - BPLId
+    - BaseRef
+
 OCRD:
   tipo: tabela
   estrategia: incremental_upsert

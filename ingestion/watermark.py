@@ -51,3 +51,4 @@ def get_watermark_composto(
     wm_date = date.fromisoformat(str(row[0])[:10])
     wm_ts = int(row[1]) if row[1] is not None else 0
     return wm_date, wm_ts
+

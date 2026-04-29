@@ -142,3 +142,4 @@ def executar_carga(hana_engine, sql_conn: pyodbc.Connection, sql_select: str, sq
             total_linhas += len(lote)
 
     return total_linhas
+

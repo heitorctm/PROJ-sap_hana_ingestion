@@ -327,3 +327,4 @@ def executar_janela(
     sql_select = montar_select_hana(tabela, metadados, filtro)
     sql_insert = montar_insert_sqlserver(tabela, metadados)
     return executar_carga(hana_engine, sql_conn, sql_select, sql_insert)
+

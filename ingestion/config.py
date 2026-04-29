@@ -46,3 +46,4 @@ def carregar_tabelas() -> dict[str, dict]:
         }
         for tabela, cfg in (dados or {}).items()
     }
+

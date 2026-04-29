@@ -75,3 +75,4 @@ def testar_conexao_sqlserver(sql_conn: pyodbc.Connection) -> None:
             "Falha ao conectar no SQL Server. Verifique se o SQL Server está ativo, "
             "se o banco existe e se o driver ODBC está instalado corretamente."
         ) from e
+

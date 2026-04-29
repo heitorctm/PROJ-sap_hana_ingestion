@@ -126,3 +126,4 @@ def mapear_tipo_hana_para_sqlserver(coluna: dict[str, Any]) -> str:
 
         case _:
             return "NVARCHAR(MAX)"
+

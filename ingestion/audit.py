@@ -65,3 +65,4 @@ def registrar_erro(
         sql_conn.commit()
     except Exception as e:
         print(f"[audit] falha ao registrar erro de {tabela}: {e}")
+

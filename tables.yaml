@@ -1,37 +1,3 @@
-# tabelas e colunas a extrair do SAP HANA
-# formato:
-#
-# NOME_TABELA:
-#   tipo: tabela | view
-#   estrategia: incremental_append | incremental_upsert | incremental_via_cabecalho | full_reload | snapshot_diario
-#   chave_primaria:
-#     - COLUNA_PK
-#   coluna_watermark: COLUNA_DATA
-#   carga_inicial:
-#     inicio: "YYYY-MM-DD"   # null = sem filtro de data
-#     fim: "YYYY-MM-DD"      # null = sem filtro de data
-#     janela_meses: 3        # null = carrega tudo de uma vez
-#   colunas:
-#     - COLUNA1
-#     - COLUNA2
-
-# ─────────────────────────────────────────────────────────────────────────────
-# MÓDULO: CICLO COMERCIAL / FISCAL
-#
-# Tabelas que compõem o ciclo de venda no SAP B1:
-#   OINV  → nota fiscal de saída (A/R Invoice) — cabeçalho
-#   INV1  → linhas da nota fiscal de saída
-#   OCRD  → cadastro de clientes e fornecedores (Business Partners)
-#   OITM  → cadastro de itens (produtos)
-#   OUSG  → tabela de usos fiscais — dimensão referenciada em INV1.Usage
-#   OITW  → estoque por depósito — posição diária de cada item
-# ─────────────────────────────────────────────────────────────────────────────
-
-# --- incremental_append com watermark composto (UpdateDate + UpdateTS) ---
-# UpdateDate tem precisão de dia; UpdateTS (HHMMSS como inteiro) adiciona precisão de segundo.
-# Filtro: WHERE UpdateDate > '{data}' OR (UpdateDate = '{data}' AND UpdateTS > {ts})
-# Garante zero duplicatas mesmo rodando múltiplas vezes no mesmo dia.
-
 OINV:
   tipo: tabela
   estrategia: incremental_append
@@ -65,12 +31,6 @@ OINV:
     - TransId
     - VatSum
 
-# --- incremental_via_cabecalho ---
-# Linhas não têm UpdateDate próprio. O pipeline captura o watermark do cabeçalho
-# correspondente ANTES de iniciar qualquer inserção, deleta as linhas afetadas e
-# reinserere. Assim, quando OINV é processado e insere novas notas, INV1 usa o
-# watermark pré-capturado para buscar os DocEntries afetados na mesma run.
-
 INV1:
   tipo: tabela
   estrategia: incremental_via_cabecalho
@@ -102,10 +62,6 @@ INV1:
     - WhsCode
     - BaseEntry
     - BaseType
-
-# --- incremental_upsert ---
-# Dados mestre: delete por PK + reinsert garante exatamente uma linha por
-# CardCode/ItemCode no raw — o raw reflete sempre o estado atual.
 
 OCRD:
   tipo: tabela
@@ -155,11 +111,6 @@ OITM:
     - frozenFor
     - validFor
 
-# --- full_reload ---
-# Tabela de referência pequena e sem campo temporal.
-# TRUNCATE + INSERT completo a cada execução.
-# OUSG é a dimensão de usos fiscais referenciada em INV1.Usage.
-
 OUSG:
   tipo: tabela
   estrategia: full_reload
@@ -173,12 +124,6 @@ OUSG:
   colunas:
     - ID
     - Usage
-
-# --- snapshot_diario ---
-# Estoque por depósito: não tem coluna de data de atualização.
-# A cada execução, deleta os registros do dia atual e reinserere tudo.
-# Acumula histórico diário via _ingestao_em.
-# NUNCA truncar: o histórico acumulado não existe no SAP HANA.
 
 OITW:
   tipo: tabela

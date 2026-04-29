@@ -114,20 +114,20 @@ Each table entry declares:
 
 ```yaml
 OINV:
-  tipo: tabela                          # tabela | view
-  estrategia: incremental_append        # see strategies below
-  frequencia: diaria                    # diaria | semanal (default: diaria)
-  chave_primaria:
+  tipo: tabela                          # type: tabela (table) | view
+  estrategia: incremental_append        # ingestion strategy — see strategies below
+  frequencia: diaria                    # frequency: diaria (daily) | semanal (weekly) — default: diaria
+  chave_primaria:                       # primary key columns
     - DocEntry
-  coluna_watermark: UpdateDate          # date column in HANA used as watermark
-  coluna_watermark_ts: UpdateTS         # time column in HANA (HHMMSS as integer) — enables second-precision watermark
-  coluna_watermark_local: _ingestao_em  # local watermark fallback column
-  append_idempotente: false             # true = deletes boundary day before inserting
-  carga_inicial:
-    inicio: "2023-01-01"               # null = no date filter
-    fim: null                           # null = today
-    janela_meses: 3                     # null = load everything at once
-  colunas:
+  coluna_watermark: UpdateDate          # watermark column in HANA (date)
+  coluna_watermark_ts: UpdateTS         # watermark time column in HANA (HHMMSS as integer) — enables second-precision
+  coluna_watermark_local: _ingestao_em  # local watermark fallback column in raw
+  append_idempotente: false             # if true: deletes boundary day before inserting (for tables with no UpdateTS)
+  carga_inicial:                        # initial load config
+    inicio: "2023-01-01"               # start date — null = no filter
+    fim: null                           # end date — null = today
+    janela_meses: 3                     # window size in months — null = load all at once
+  colunas:                              # columns to extract
     - DocEntry
     - DocDate
     - ...

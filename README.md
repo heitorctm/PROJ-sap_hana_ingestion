@@ -312,9 +312,30 @@ ORDER BY inicio_em DESC
 | PCH6 | tabela | snapshot_diario | diaria | — | _ingestao_em |
 | ITM1 | tabela | snapshot_diario | diaria | — | _ingestao_em |
 | OITW | tabela | snapshot_diario | diaria | — | _ingestao_em |
+| OMRC | tabela | full_reload | diaria | — | — |
+| OPLN | tabela | full_reload | diaria | — | — |
+| OEXD | tabela | full_reload | diaria | — | — |
+| OUSR | tabela | full_reload | diaria | — | — |
+| OVPM | tabela | full_reload | diaria | — | — |
+| OPOR | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| POR1 | tabela | incremental_via_cabecalho | diaria | via OPOR.UpdateDate | — |
+| OPRQ | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| PRQ1 | tabela | incremental_via_cabecalho | diaria | via OPRQ.UpdateDate | — |
+| ODLN | tabela | incremental_append | diaria | UpdateDate | _ingestao_em |
+| DLN1 | tabela | incremental_via_cabecalho | diaria | via ODLN.UpdateDate | — |
+| PCH1 | tabela | incremental_via_cabecalho | diaria | via OPCH.UpdateDate+UpdateTS | — |
+| PCH12 | tabela | full_reload | diaria | — | — |
+| RIN3 | tabela | full_reload | diaria | — | — |
+| RIN21 | tabela | full_reload | diaria | — | — |
 
-> **Tabelas de linha (INV1, QUT1, RDR1, RIN1):** `incremental_via_cabecalho` — detectam alterações pelo watermark do cabeçalho correspondente, deletam e reinserem apenas as linhas afetadas.
+> **Tabelas de linha (INV1, QUT1, RDR1, RIN1, PCH1, POR1, PRQ1, DLN1):** `incremental_via_cabecalho` — detectam alterações pelo watermark do cabeçalho correspondente, deletam e reinserem apenas as linhas afetadas.
 >
 > **Dados mestre (OITM, OCRD):** `incremental_upsert` — delete por PK + reinsert garante uma única linha por ItemCode/CardCode no raw.
 >
 > **Tabelas snapshot (INV6, PCH6, ITM1, OITW):** acumulam histórico diário via `_ingestao_em`. A cada execução, os registros do dia atual são deletados e reinseridos (idempotente). Nunca truncar essas tabelas — o histórico acumulado não existe no SAP HANA.
+>
+> **OVPM:** `full_reload` — sem campo `UpdateDate`; cancelamentos retroativos seriam invisíveis para qualquer estratégia incremental. 65k linhas em ~22s.
+>
+> **Pedidos de compra e requisições (OPOR/POR1, OPRQ/PRQ1):** `incremental_append` + `incremental_via_cabecalho` — cabeçalhos guardam histórico de estados (aberto → parcialmente entregue → fechado). Sem `UpdateTS`, o watermark é dia-granulado.
+>
+> **Entregas (ODLN/DLN1):** mesmo padrão de OPOR/POR1 — `incremental_append` no cabeçalho, `incremental_via_cabecalho` nas linhas.
